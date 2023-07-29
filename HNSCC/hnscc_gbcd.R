@@ -41,7 +41,7 @@ source("../code/fit_cov_ebnmf.R")
 ### fit GBCD to estimate GEP memberships and signatures
 ### The runtime depends on the size of the dataset being analyzed, the number of maximum GEPs and the computing environment.
 ### It takes about 3 hours to fit 24 GEPs for the HNSCC dataset.
-fit.gbcd <- fit.cov.ebnmf(Y = Y, Kmax = 24, prior = as.ebnm.fn(prior_family = "generalized_binary", scale = 0.04), extrapolate = FALSE)
+fit.gbcd <- fit.cov.ebnmf(Y = Y, Kmax = 24, prior = flash_ebnm(prior_family = "generalized_binary", scale = 0.04), extrapolate = FALSE)
 save(fit.gbcd, file = "hnscc_gbcd.RData")
 
 
@@ -65,29 +65,29 @@ cols <- colorRampPalette(c("gray96", "red"))(50)
 brks <- seq(0, 1, 0.02)
 
 ### plot the annotated heatmap of GEP memberships
-pheatmap(fit.gbcd$L[order(anno$subject), ], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE, 
-         annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, 
+pheatmap(fit.gbcd$L[order(anno$subject), ], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE,
+         annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE,
          angle_col = 45, fontsize = 12, fontsize_col = 11, color = cols, breaks = brks, main = "GEP membership estimates")
 
 ### show the estimated GEP signatures and corresponding log fold change
 head(round(fit.gbcd$F, 3))
 
 ### plot the volcano plot to visualize the gene signature for a given GEP
-pdat <- data.frame(gene = rownames(fit.gbcd$F$lfc), 
-                   lfc = fit.gbcd$F$lfc[, "GEP2"], 
-                   z = abs(fit.gbcd$F$z_score[, "GEP2"]), 
+pdat <- data.frame(gene = rownames(fit.gbcd$F$lfc),
+                   lfc = fit.gbcd$F$lfc[, "GEP2"],
+                   z = abs(fit.gbcd$F$z_score[, "GEP2"]),
                    lfsr = fit.gbcd$F$lfsr[, "GEP2"],
                    stringsAsFactors = FALSE)
 pdat <- transform(pdat, lfsr = cut(lfsr, c(-1, 0.001, 0.01, 0.05, Inf)))
 rows  <- with(pdat, which(!(abs(lfc) > quantile(abs(lfc), 0.996) | (z > 10))))
-pdat[rows, "gene"] <- ""    
-ggplot(pdat, aes(x = lfc, y = z, color = lfsr, label = gene)) + geom_point() + 
+pdat[rows, "gene"] <- ""
+ggplot(pdat, aes(x = lfc, y = z, color = lfsr, label = gene)) + geom_point() +
   geom_text_repel(color = "black", size = 3, segment.color = "black",
                   segment.size = 0.25, min.segment.length = 0,
                   max.overlaps = Inf, na.rm = TRUE) +
   scale_color_manual(values = c("coral", "orange", "gold", "deepskyblue")) +
-  labs(x = "log-fold change", y = "|posterior z-score|") + 
-  guides(colour = guide_legend(override.aes = list(size = 4))) + 
-  theme(plot.title = element_text(hjust = 0.5, size = 25), axis.text = element_text(size = 20), axis.title = element_text(size = 20), 
-        legend.title = element_text(size = 20), legend.text = element_text(size = 16), legend.position = "bottom") + 
+  labs(x = "log-fold change", y = "|posterior z-score|") +
+  guides(colour = guide_legend(override.aes = list(size = 4))) +
+  theme(plot.title = element_text(hjust = 0.5, size = 25), axis.text = element_text(size = 20), axis.title = element_text(size = 20),
+        legend.title = element_text(size = 20), legend.text = element_text(size = 16), legend.position = "bottom") +
   ggtitle("Volcano plot of gene signature for GEP2")
