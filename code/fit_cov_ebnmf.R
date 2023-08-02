@@ -40,7 +40,7 @@ fit.cov.ebnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres 
   ### keep at most Kmax factors based on proportion of variance explained and refit EB-NMF to covariance matrix
   kset <- (length(fit.cov$pve) - rank(fit.cov$pve) < 1.5*Kmax) & (fit.cov$pve > 0)
   # kset <- (fit.cov$pve > 0)
-  kall <- 1:fit.cov$n.factors
+  kall <- 1:fit.cov$n_factors
   if(!all(kset))
     fit.cov <- flash_factors_remove(fit.cov, kset=kall[!kset])
   fit.cov <- fit.ebcovmf(dat = dat, fl = fit.cov, prior = prior, extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)$fl
@@ -59,7 +59,7 @@ fit.cov.ebnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres 
       init = list(as.matrix(fit.L), as.matrix(init.F)),
       ebnm_fn = c(prior, ebnm_point_laplace)
     ) %>%
-    flash_factors_fix(kset = 1:ncol(fit.L), mode = 1L) %>%
+    flash_factors_fix(kset = 1:ncol(fit.L), which_dim = "loadings") %>%
     flash_backfit(extrapolate = FALSE, verbose = verbose)
 
   ### calculate the z-score and lfsr of GEP signatures by running linear regression followed by ash

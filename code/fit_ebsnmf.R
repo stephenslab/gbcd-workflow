@@ -9,7 +9,7 @@ fit.ebsnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, extrapola
 
   ### fit EBMF with point laplace prior to gene expression data matrix
   fit.mf <- flash_init(Y, S = 1/sqrt(nrow(Y)), var_type = 2) %>%
-    flash_greedy(Kmax = Kmax, ebnm.fn = ebnm_point_laplace) %>%
+    flash_greedy(Kmax = Kmax, ebnm_fn = ebnm_point_laplace) %>%
     flash_backfit(maxiter = maxiter, verbose = verbose)
 
   ### initialize EB-SNMF fit from the EBMF fit with point laplace prior
@@ -27,7 +27,7 @@ fit.ebsnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, extrapola
   kset <- (length(fit.snmf$pve) - rank(fit.snmf$pve) < Kmax) & (fit.snmf$pve > 0)
   fit.snmf <- flash_init(Y, S = 1/sqrt(nrow(Y)), var_type = 2) %>%
     flash_factors_init(
-      init = lapply(fit.snmf$flash.fit$EF, function(x) x[, kset]),
+      init = lapply(fit.snmf$flash_fit$EF, function(x) x[, kset]),
       ebnm_fn = c(prior, ebnm_point_laplace)
     ) %>%
     flash_backfit(extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)
