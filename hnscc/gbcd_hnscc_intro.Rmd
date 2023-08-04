@@ -163,28 +163,39 @@ The time to fit GBCD depends on the choice of `Kmax` and the size of
 the data set being analyzed. It took us a few hours to fit the GBCD
 model with `Kmax = 24` to the HNSCC data set.
 
-Interpret GBCD results from the HNSCC data
-------------------------------------------
+Since it takes a while to fit GBCD to the HNSCC dataset, we directly
+load in the saved output from the above call and show how to interpret
+the results.
 
-Since it takes a while to fit GBCD to the HNSCC dataset, we directly load in the saved output from the above call and show how to interpret the results.
-
-```{r load-fit, eval=FALSE}
+```{r load-fit}
 load("hnscc_gbcd.RData")
 ```
 
-Take a look at a summary of the GBCD results.
+The `flash_fit_cov_ebnmf` output contains the membership estimates,
+stored as an $n \times K$ matrix,
 
-```{r summary-fit, eval=FALSE}
-summary(fit.gbcd)
+```{r summary-fit-L}
+dim(fit.gbcd$L)
+fit.gbcd$L[1:4,1:5]
+```
+
+and posterior statistics for the LFC estimates, including the
+posterior means, stored as an $m \times K$ matrix,
+
+```{r summary-fit-F}
+dim(fit.gbcd$F$lfc)
+fit.gbcd$F$lfc[1:4,1:5]
 ```
 
 GEP membership estimates
----------------------------------
+------------------------
 
-We now look at the matrix of GEP membership estimates $L$ with entries $l_{ik}$ representing the membership of cell $i$ in GEP $k$. Here we show the top rows of $L$.
+We now look at the matrix of GEP membership estimates $L$ with entries
+$l_{ik}$ representing the membership of cell $i$ in GEP $k$. Here we
+show the top rows of $L$.
 
 ```{r summary-L, eval=FALSE}
-head(round(fit.gbcd$L, 3))
+head(round(fit.gbcd$L,digits = 3))
 ```
 
 Create a heatmap to visualize GEP membership estimates.
