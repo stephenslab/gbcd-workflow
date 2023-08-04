@@ -43,8 +43,8 @@ $f_{jk}$ values as LFCs, and to the vector of LFCs $(f_{1k}, \dots,
 f_{Jk})^T$ as the "signature" of GEP $k$.
 
 ```{r knitr-opts, include=FALSE}
-knitr::opts_chunk$set(comment = "#",collapse = TRUE,results = "hold",
-                      fig.align = "center",dpi = 120)
+knitr::opts_chunk$set(comment = "#", collapse = TRUE, results = "hold",
+                      fig.align = "center", dpi = 120)
 ```
 
 We begin our analysis by loading the R packages used in the analysis,
@@ -190,80 +190,81 @@ fit.gbcd$F$lfc[1:4,1:5]
 GEP membership estimates
 ------------------------
 
-We now look at the matrix of GEP membership estimates $L$ with entries
-$l_{ik}$ representing the membership of cell $i$ in GEP $k$. Here we
-show the top rows of $L$.
+We now examine at the entries of the `L` matrix giving membership
+estimates of cell $i$ in GEP $k$. Here we visually compare the
+memberships to the patient labels and provided tumor subtype
+annotations with a heatmap. 
 
-```{r summary-L, eval=FALSE}
-head(round(fit.gbcd$L,digits = 3))
-```
-
-Create a heatmap to visualize GEP membership estimates.
-
-```{r plot-L, fig.height=6, fig.width=11, eval=FALSE}
-### add the sample and molecular subtype annotation of cells to visualize the GEP memberships
-anno <- data.frame(subject=info$subject, subtype=info$subtype)
+```{r plot-L, fig.height=4, fig.width=7}
+anno <- data.frame(subject = info$subject,
+                   subtype = info$subtype)
 rownames(anno) <- rownames(fit.gbcd$L)
-anno_colors <- list(subject=subject_col, subtype=subtype_col)
-cols <- colorRampPalette(c("gray96", "red"))(50)
-brks <- seq(0, 1, 0.02)
-
-### plot the annotated heatmap of GEP memberships
-pheatmap(fit.gbcd$L[order(anno$subject), -c(1)], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE, annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, angle_col = 45, fontsize = 10, color = cols, breaks = brks, main = "")
+anno_colors <- list(subject = subject_col,
+                    subtype = subtype_col)
+cols <- colorRampPalette(c("gray96","red"))(50)
+brks <- seq(0,1,0.02)
+rows <- order(anno$subject)
+p <- pheatmap(fit.gbcd$L[rows, -1], cluster_rows = FALSE, cluster_cols = FALSE,
+         show_rownames = FALSE, annotation_row = anno,
+         annotation_colors = anno_colors, annotation_names_row = FALSE,
+		 angle_col = 45, fontsize = 8, color = cols, breaks = brks,
+		 main = "")
+print(p)		 
 ```
 
-This heatmap shows the membership values of the $n = 2,176$ cells
-(rows) for 28 GEPs (columns). Cells are arranged top-to-bottom by
-tumor molecular subtype and patient of origin. Membership values are
-rescaled separately for GEPs so that the maximum membership for each
-GEP is always 1.
+This heatmap shows the membership values of the n = 2,176 cells (the
+rows in the heatmap) and the 28 GEPs (the columns in the
+heatmap). (The membership values for the "baseline" GEP are not
+shown.) Cells are arranged top-to-bottom by tumor molecular subtype
+and patient of origin. We rescaled the membership values separately for
+each GEP so that the maximum membership for each GEP is always 1.
 
-From this heatmap, we see that GEPs 1-3 correspond closely to the
-molecular subtypes previously defined based on bulk RNA-seq data: GEP1
-is largely active only in cells from the 2 classical patients, GEP2 is
-mainly active in cells from the 7 basal patients, and GEP3 is mainly
-active in cells from the 1 atypical patient. This demonstrates that
-GBCD can extract the molecular subtype information *de novo* from the
+From this heatmap, we see that GEPs 1, 2 and 3 correspond closely to
+the molecular subtypes previously defined based on bulk RNA-seq data:
+GEP1 is largely active only in cells from the 2 classical patients,
+GEP2 is mainly active in cells from the 7 basal patients, and GEP3 is
+mainly active in cells from the 1 atypical patient. This demonstrates
+that GBCD can reconstruct the molecular subtype information from the
 single cell data alone.
 
 Among other GEPs, some are active predominantly in an individual
-patient and can thus be interpreted as patient-specific GEPs,
-including GEPs 4,7,9,11,25,27; the remaining GEPs are shared across
-patients but do not correspond to molecular subtypes.
+patient and can thus be interpreted as patient-specific GEPs.  We
+interpret GEPs 4, 7, 9, 11, 25, 27 as "patient-specific GEPs"; the
+remaining GEPs are shared across multiple patients but are capturing
+something different than these previously defined molecular subtypes.
 
 GEP signature estimates
 -----------------------
 
-We next look at the matrix of GEP signature estimates $F$ with each
-entry $f_{jk}$ approximately representing the $\text{log}_2$-fold
-change associated with membership in GEP $k$.
+The GEP signature estimates $f_{jk}$ represent approximately the
+log-fold change (using t he base-2 logarithm) associated with
+membership in GEP $k$. We take the approach commonly used in
+differential expression analysis and create a "volcano plot" to
+visualize the gene signature for a GEP. As an example, this is the
+volcano plot for GEP2:
 
-```{r summary-lfc, eval=FALSE}
-head(round(fit.gbcd$F$lfc, 3))
-```
-
-Create a volcano plot to visualize the gene signature for a given GEP
-(here we plot GEP2 as an example), which also makes use of measures of
-significance of LFCs produced by GBCD, including *z-score* and *local
-false sign rate*, or [*lfsr*][lfsr].
-
-```{r plot-lfc, fig.height=7.5, fig.width=11, eval=FALSE}
+```{r plot-lfc, fig.height=3.5, fig.width=5}
+k <- "GEP2"
 pdat <- data.frame(gene = rownames(fit.gbcd$F$lfc), 
-                   lfc = fit.gbcd$F$lfc[, "GEP2"], 
-                   z = abs(fit.gbcd$F$z_score[, "GEP2"]), 
-                   lfsr = fit.gbcd$F$lfsr[, "GEP2"],
+                   lfc  = fit.gbcd$F$lfc[,k], 
+                   z    = abs(fit.gbcd$F$z_score[,k]), 
+                   lfsr = fit.gbcd$F$lfsr[,k],
                    stringsAsFactors = FALSE)
-pdat <- transform(pdat, lfsr = cut(lfsr, c(-1, 0.001, 0.01, 0.05, Inf)))
-rows  <- with(pdat, which(!(abs(lfc) > quantile(abs(lfc), 0.996) | (z > 10))))
+pdat <- transform(pdat,lfsr = cut(lfsr, c(-1,0.001,0.01,0.05,Inf)))
+rows  <- with(pdat, which(!(abs(lfc) > quantile(abs(lfc),0.999) | (z > 10))))
 pdat[rows, "gene"] <- ""
-
-ggplot(pdat, aes(x = lfc, y = z, color = lfsr, label = gene)) + geom_point() + 
-  geom_text_repel(color = "black", size = 3, segment.color = "black", segment.size = 0.25, min.segment.length = 0, max.overlaps = Inf, na.rm = TRUE) +
-  scale_color_manual(values = c("coral", "orange", "gold", "deepskyblue")) +
+ggplot(pdat, aes(x = lfc, y = z, color = lfsr, label = gene)) +
+  geom_point() + 
+  geom_text_repel(color = "black", size = 2.3, segment.color = "black",
+                  segment.size = 0.25, min.segment.length = 0,
+                  max.overlaps = Inf, na.rm = TRUE) +
+  scale_color_manual(values = c("coral","orange","gold","deepskyblue")) +
   labs(x = "log-fold change", y = "|posterior z-score|") + 
-  guides(colour = guide_legend(override.aes = list(size = 4))) + 
-  theme(plot.title = element_text(hjust = 0.5, size = 24), axis.text = element_text(size = 20), axis.title = element_text(size = 20), legend.title = element_text(size = 20), legend.text = element_text(size = 16), legend.position = "bottom") + ggtitle("Volcano plot of gene signature for GEP2")
+  theme_cowplot(font_size = 10)
 ```
+
+The significance measure here is not a *p*-value, but rather a [local
+false sign rate (lfsr)][lfsr].
 
 Session info
 ------------
@@ -278,6 +279,6 @@ sessionInfo()
 [hnscc]: https://doi.org/10.1016/j.cell.2017.10.044
 [harmony]: https://portals.broadinstitute.org/harmony
 [liger]: https://github.com/welch-lab/liger
-[tcga]: https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4311405/
+[tcga]: https://doi.org/10.1038%2Fnature14129
 [ebnm]: https://stephenslab.github.io/ebnm/
-[lfsr]: https://academic.oup.com/biostatistics/article/18/2/275/2557030
+[lfsr]: https://doi.org/10.1093/biostatistics/kxw041
