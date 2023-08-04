@@ -1,0 +1,348 @@
+---
+title: "Fitting generalized binary covariance decomposition to single-cell RNA-seq data using flashier"
+author: Yusha Liu
+date: "`r Sys.Date()`"
+output:
+  bookdown::html_document2: default
+---
+
+# Overview {-}
+
+This vignette shows how to apply "generalized binary covariance decomposition" (GBCD) to jointly analyze single-cell RNA-seq (scRNA-seq) data from *malignant cells* collected from multiple patients and/or studies, using the functions defined in the [flashier][flashier] package. 
+
+GBCD can dissect tumor transcriptional heterogeneity into patient/study-specific and shared gene expression programs (GEPs), and requires an input of the combined scRNA-seq data from all tumors, which are stored as an $N \times J$ matrix $Y$ of log-transformed expression values with entries $y_{ij}$, where $i=1,\dots,N$ indexes malignant cells and $j=1,\dots,J$ indexes genes. 
+
+GBCD ultimately yields a decomposition of the expression data matrix $Y$ into matrices $L$ and $F$ such that $Y \approx L F^T$, or equivalently,
+$y_{ij} \approx \sum_{k=1}^K l_{ik} f_{jk}.$ The $K$ components are interpreted as GEPs, with $l_{ik}$ representing the membership of cell $i$ in GEP $k$, and $f_{jk}$ representing the effect of GEP $k$ on the expression of gene $j$. When $y_{ij}$ are log-transformed counts, each $f_{jk}$ approximately represents the log-fold change (LFC) associated with membership in GEP $k$, so we refer to the $f_{jk}$ values as LFCs, and to the vector of LFCs $(f_{1k}, \dots, f_{Jk})^T$ as the "signature" of GEP $k$.
+
+```{r knitr-opts, include=FALSE}
+knitr::opts_chunk$set(comment = "#", collapse = TRUE, results = "hold", fig.align = "center", dpi = 120)
+```
+
+We begin our analysis by loading the needed R packages. Then we show how to apply GBCD to an example dataset step by step.
+
+```{r load-pkgs, message=FALSE, warning=FALSE}
+library(Matrix)
+library(ebnm)
+library(flashier)
+library(magrittr)
+library(ashr)
+```
+
+
+# Introduce the HNSCC data {-}
+
+We show how to fit GBCD to a subset of the head and neck squamous cell carcinoma (HNSCC) dataset from [Puram et al. (2017)][hnscc]. This subsetted dataset contains transcriptional profiles for $n=671$ malignant cells collected from primary tumors from 10 HNSCC patients and matching lymph node (LN) metastases from 5 of these patients. See [here][hnscc_application] for a detailed description and visualization of the whole dataset. 
+
+We load in the subsetted dataset, which includes a matrix $Y$ of log-transformed expression data and the accompanying annotation for cells. 
+
+```{r load-data}
+load("hnscc_subset.RData")
+```
+
+```{r view-data-1}
+dim(Y)
+```
+
+```{r view-data-2}
+Y[1:5, 1:5]
+```
+
+```{r view-data-3}
+head(info)
+```
+
+```{r view-data-4}
+table(info$subject)
+```
+
+
+# Apply GBCD to the HNSCC data {-} 
+
+We provide a step-by-step description of how to fit GBCD using the existing functions in the [flashier][flashier] package. 
+
+## Estimate the GEP membership matrix $L$ {-}
+
+GBCD estimates the GEP membership matrix $L$ by decomposing $YY^T$ using the empirical Bayes matrix factorization (EBMF) framework, implemented in [flashier][flashier], as follows
+$$ 
+\begin{align}
+YY^T & \ = L\tilde{L}^T + \epsilon I_N + E, (\#eq:1)  \\
+e_{ij} & \overset{i.i.d.}{\sim} N(0, \varphi^2), (\#eq:2) \\
+l_{ik} & \sim (1-\pi_k^l) \delta_0 + \pi_k^l \: N_{+} (\mu_k, (c_k\mu_k)^2), (\#eq:3) \\
+\tilde{l}_{ik} & \sim (1-\tilde{\pi}_k^l) \delta_0 + \tilde{\pi}_k^l \: N_{+} (\tilde{\mu}_k, (\tilde{c}_k \tilde{\mu}_k)^2). (\#eq:4)
+\end{align}
+$$
+$I_N$ is the $N \times N$ identity matrix, $E$ is an $N \times N$ matrix of residuals with entries $e_{ij}$, and $\epsilon > 0, \varphi^2 > 0$ are additional unknowns to be estimated. GBCD assigns a "generalized binary" (GB) prior independently to each entry of $L$ and $\tilde{L}$, as shown in \@ref(eq:3) and \@ref(eq:4), where $\delta_0$ denotes a point mass at 0 and $N_{+}(\mu, \sigma^2)$ denotes a normal distribution with mean $\mu$ and variance $\sigma^2$ left-truncated at zero. The component-specific hyper-parameters $\pi_k^l, \mu_k, \tilde{\pi}_k^l, \tilde{\mu}_k$ of the GB prior are estimated from data by leveraging information across all cells using an empirical Bayes method; $c_k, \tilde{c}_k$ are some small values pre-specified by the user, and in this example we set $c_k = \tilde{c}_k = 0.1$ for each $k$.  
+
+To fit GBCD, users need to specify $Kmax$, an upper bound of the number of components $K$, just for initialization purposes (see below); the number of GEPs returned by GBCD is close to but often not equal to (and can be larger than) $Kmax$.
+
+```{r specify-Kmax}
+Kmax <- 12
+```
+
+### Calculate $YY^T$ from $Y$ {-} 
+
+```{r calculate-cov}
+dat <- Y %*% t(Y)/ncol(Y)
+```
+
+### Initialize the decomposition of $YY^T$ {-}
+An initialization strategy that we found to work well empirically is to fit \@ref(eq:1)-\@ref(eq:4) with a point Laplace prior (which does not have an nonnegativity constraint) instead of a GB prior on $L$ and $\tilde{L}$. To do so, we first fit the model without considering the diagonal component $\epsilon I_N$.
+
+```{r initialize-L-1}
+fit.cov <- flash_init(dat, var_type = 0) %>%
+  flash_greedy(Kmax = 1, ebnm_fn = ebnm_unimodal_nonnegative, verbose = 1) %>%
+  flash_greedy(Kmax = Kmax - 1, ebnm_fn = ebnm_point_laplace, verbose = 1) %>%
+  flash_backfit(maxiter = 200, verbose = 1)
+```
+
+Note that the argument ``maxiter`` denotes the maximum number of backfitting iterations in the ``flash_backfit`` call, which can take other values specified by the user (default is 500).
+
+We then refine the flashier fit by considering the diagonal component $\epsilon I_N$. For convenience, we define a function that, starting from an initial flashier fit (such as the one obtained above), can fit \@ref(eq:1)-\@ref(eq:4) for any specified family of prior distributions on $L$ and $\tilde{L}$. The specified prior family, however, must be defined in the [ebnm][ebnm] package.
+
+```{r define-cov-function}
+fit.ebcovmf <- function(dat, fl, prior, extrapolate = TRUE, maxiter = 500, pve_min = 0, verbose = 1){
+  epsilon <- max(0, mean(diag(dat) - diag(fitted(fl))))
+  epsilon_diff <- Inf
+
+  # alternate between estimating epsilon and backfitting until convergence
+  while(epsilon > 0 && abs(epsilon_diff - 1) > 1e-3) {
+    dat_minus <- dat - diag(rep(epsilon, ncol(dat)))
+    kset <- which(fl$pve > pve_min)
+    kmax <- which.max(fl$pve)
+    kset <- kset[-c(kmax)]
+    fl <- flash_init(dat_minus) %>%
+      flash_factors_init(
+        init = lapply(fl$flash_fit$EF, function(x) x[, kmax, drop = FALSE]),
+        ebnm_fn = ebnm_unimodal_nonnegative
+      ) %>%
+      flash_factors_init(
+        init = lapply(fl$flash_fit$EF, function(x) x[, kset, drop = FALSE]),
+        ebnm_fn = prior
+      ) %>%
+      flash_backfit(extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)
+    old_epsilon <- epsilon
+    epsilon <- max(0, mean(diag(dat) - diag(fitted(fl))))
+    epsilon_diff <- epsilon / old_epsilon
+  }
+
+  return(list(dat=dat, fl=fl, epsilon=epsilon))
+}
+```
+
+We call the function ``fit.ebcovmf`` to refine the flashier fit. 
+
+```{r initialize-L-2}
+fit.cov <- fit.ebcovmf(dat = dat, fl = fit.cov, prior = ebnm::ebnm_point_laplace, maxiter = 200, verbose = 1)$fl
+```
+
+We then obtain the posterior mean estimates of $L$ and $\tilde{L}$ from the flashier fit with a point Laplace prior, which are respectively denoted as $\hat{L}$ and $\hat{\tilde{L}}$. Then we initialize $L$ and $\tilde{L}$ for a flashier fit with a GB prior (which has an nonnegativity constraint) by setting $L_{init} = \left[\max\{\hat{L}, 0_{N \times K}\} \: \max\{-\hat{L}, 0_{N \times K}\} \right]$ and $\tilde{L}_{init} = \left[ \max\{\hat{\tilde{L}}, 0_{N \times K}\} \: \max\{-\hat{\tilde{L}}, 0_{N \times K}\}\right]$.
+
+```{r initialize-L-3}
+### define the function to calculate L_init and L-tilde_init from posterior mean estimates of L and L-tilde of a flashier fit without sign constraint
+init.cov.ebnmf <- function(fl, kset = 1:ncol(fl$flash_fit$EF[[1]])) {
+  LL <- fl$flash_fit$EF[[1]][, kset, drop = FALSE]
+  FF <- fl$flash_fit$EF[[2]][, kset, drop = FALSE]
+
+  LL <- cbind(pmax(LL, 0), pmax(-LL, 0))
+  LL <- cbind(fl$flash_fit$EF[[1]][, -kset, drop = FALSE], LL)
+  FF <- cbind(pmax(FF, 0), pmax(-FF, 0))
+  FF <- cbind(fl$flash_fit$EF[[2]][, -kset, drop = FALSE], FF)
+
+  to.keep <- (colSums(LL) > .Machine$double.eps) & (colSums(FF) > .Machine$double.eps)
+  LL <- LL[, to.keep, drop = FALSE]
+  FF <- FF[, to.keep, drop = FALSE]
+
+  return(list(LL, FF))
+}
+
+### call the function defined above
+cov.init <- init.cov.ebnmf(fit.cov)
+```
+
+### Perform the decomposition of $YY^T$ {-}
+Having initialized the flashier fit (with a GB prior) using $L_{init}$ and $\tilde{L}_{init}$, we backfit a small number of iterations, without considering the diagonal component $\epsilon I_N$.
+
+```{r backfit-L-1}
+### specify the GB prior 
+prior <- flash_ebnm(prior_family = "generalized_binary", scale = 0.1)
+
+### backfit a small number of iterations
+kmax <- which.max(colSums(cov.init[[1]]))
+
+fit.cov <- flash_init(dat, var_type = 0) %>%
+  flash_factors_init(
+    init = lapply(cov.init, function(x) x[, kmax, drop = FALSE]),
+    ebnm_fn = ebnm_unimodal_nonnegative
+    ) %>%
+  flash_factors_init(
+    init = lapply(cov.init, function(x) x[, -c(kmax), drop = FALSE]),
+    ebnm_fn = prior
+    ) %>%
+  flash_backfit(extrapolate = FALSE, maxiter = 25, verbose = 1)
+```
+
+We then refine the flashier fit above by considering the diagonal component $\epsilon I_N$, by calling the function ``fit.ebcovmf`` defined just now.
+
+```{r backfit-L-2}
+fit.cov <- fit.ebcovmf(dat = dat, fl = fit.cov, prior = prior, extrapolate = FALSE, maxiter = 25, verbose = 1)$fl
+```
+
+To save computational time, we keep the top $1.5 Kmax$ components from this flashier fit based on proportion of variance explained (PVE), before further refining the pruned fit by backfitting a greater number of iterations. 
+
+```{r backfit-L-3}
+kset <- (length(fit.cov$pve) - rank(fit.cov$pve) < 1.5*Kmax) & (fit.cov$pve > 0)
+kall <- 1:fit.cov$n_factors
+fit.cov <- flash_factors_remove(fit.cov, kset=kall[!kset])
+fit.cov <- fit.ebcovmf(dat = dat, fl = fit.cov, prior = prior, extrapolate = FALSE, maxiter = 200, verbose = 1)$fl
+```
+
+### Assess concordance between $L$ and $\tilde{L}$ {-}
+
+For each GEP $k$, we compute the Pearson correlation between the posterior mean estimates of $l_k$ and $\tilde{l}_k$ as a measure of concordance, and use the estimated $l_k$ as the GEP membership estimate, which is rescaled such that the maximum membership among cells is always 1.
+
+```{r correlation-L}
+k.order <- order(fit.cov$pve, decreasing = TRUE)
+fit.L <- fit.cov$L_pm[, k.order]
+fit.Ltilde <- fit.cov$F_pm[, k.order]
+corr <- diag(cor(fit.L, fit.Ltilde))
+fit.L <- t(t(fit.L)/apply(fit.L, 2, max))
+```
+
+
+## Estimate the GEP signature matrix $F$ {-}
+
+We estimate the GEP signature matrix $F$ by fitting an EBMF model to $Y$ with fixed $L=$``fit.L``. 
+$$ 
+\begin{align}
+Y &  = LF^T + \tilde{E}, (\#eq:5) \\
+\tilde{e}_{ij} & \sim \mathrm{N}(0, \tilde{\varphi}_j^2), (\#eq:6) \\
+f_{jk} & \sim  (1-\pi_k^f) \delta_0 + \pi_k^f \: \mathrm{Laplace} (\lambda_k), (\#eq:7) 
+\end{align}
+$$
+where $\tilde{E}$ is an $N \times J$ matrix of independent residuals $\tilde{e}_{ij}$, and $\tilde{\varphi}_j^2 > 0 \: (j = 1, \dots, J)$ are additional unknowns to be estimated. The component-specific hyper-parameters $\pi_k^f, \lambda_k$ of the point Laplace prior are estimated from data by pooling information across all genes using an empirical Bayes method. For each $k$, the genes with largest (and positive) estimates of $f_{jk}$ are interpreted as the genes driving the GEP $k$. 
+
+```{r estimate-F}
+### initialize F
+init.F <- t(solve(crossprod(fit.L), crossprod(fit.L, Y)))
+
+### backfit F 
+fit.snmf <- flash_init(Y, S = 1/sqrt(nrow(Y)), var_type = 2) %>%
+  flash_factors_init(
+    init = list(as.matrix(fit.L), as.matrix(init.F)),
+    ebnm_fn = c(prior, ebnm_point_laplace)
+    ) %>%
+  flash_factors_fix(kset = 1:ncol(fit.L), which_dim = "loadings") %>%
+  flash_backfit(extrapolate = FALSE, verbose = 1)
+```
+
+
+## Improve the uncertainty quantification of GEP signatures $F$ {-}
+At this point, we have already obtained a point esimate of $L$ and $F$. Although flashier also provides corresponding uncertainty estimates, mean field variational approximations, which are used in the EBMF framework, are known to underestimate uncertainty in posterior distributions. Therefore, we perform additional calculations to obtain better uncertainty quantifications of the LFC estimates $F$, which we subsequently use to compute posterior $z$-scores and other posterior quantities for $f_{jk}$. Please refer to our GBCD paper for a detailed description.
+
+```{r improve-uncertainty}
+J <- ncol(Y)
+genes <- colnames(Y)
+F.est <- matrix(0, J, ncol(fit.snmf$L_pm))
+rownames(F.est) <- genes
+colnames(F.est) <- colnames(fit.snmf$L_pm)
+F.se <- F.est
+F.z.ash <- F.est
+F.lfsr.ash <- F.est
+
+for (j in 1:J) {
+  y     <- Y[,j]
+  dat.x   <- as.data.frame(cbind(y, fit.snmf$L_pm))
+  fit   <- lm(y ~ 0 + ., dat.x)
+  coefs <- summary(fit)$coefficients
+  F.est[j,] <- coefs[, "Estimate"]
+  F.se[j,]  <- coefs[, "Std. Error"]
+}
+
+for(k in 1:ncol(F.est)){
+  fit <- ash(F.est[,k], F.se[,k], mixcompdist = "normal", method = "shrink")
+  F.z.ash[,k] <- fit$result$PosteriorMean/fit$result$PosteriorSD
+  F.lfsr.ash[,k] <- fit$result$lfsr
+}
+```
+
+
+## Save the output from the GBCD fit {-}
+Finally, we save the output from the GBCD fit, which includes (1) a point estimate of the GEP membership matrix $L$, and (2) a point estimate of the GEP signature matrix $F$ as well as the associated $z$-score and local false sign rate ($lfsr$) quantifying uncertainty in the estimation of $f_{jk}$. 
+
+For the returned GEPs by GBCD, we only keep component $k$ if the Pearson correlation between estimated $l_k$ and $\tilde{l}_k$ is greater than some pre-specified threshold (e.g., 0.8). 
+
+```{r return-output}
+k.idx <- which(corr > 0.8)
+L.pm <- fit.snmf$L_pm[, k.idx]
+colnames(L.pm) <- c("Baseline", paste0("GEP", 1:(ncol(L.pm)-1)))
+F.lfc <- fit.snmf$F_pm[, k.idx]/log(2)
+F.z <- F.z.ash[, k.idx]
+F.lfsr <- F.lfsr.ash[, k.idx]
+colnames(F.lfc) <- colnames(L.pm)
+colnames(F.z) <- colnames(L.pm)
+colnames(F.lfsr) <- colnames(L.pm)
+fit.gbcd <- list(L = L.pm, F = list(lfc = F.lfc, z_score = F.z, lfsr = F.lfsr))
+```
+
+
+# Look at GBCD results for the HNSCC data {-} 
+
+Take a look at a summary of the GBCD results.
+
+```{r summary-fit}
+summary(fit.gbcd)
+```
+
+We now look at the matrix of GEP membership estimates $L$. Here we show the top rows of estimated $L$.
+
+```{r summary-L}
+head(round(fit.gbcd$L, 3))
+```
+
+Create a heatmap to visualize GEP membership estimates.
+
+```{r plot-L, fig.height=6, fig.width=11}
+### load in R packages
+library(RColorBrewer)
+library(pheatmap)
+
+### add the sample and molecular subtype annotation of cells to visualize the GEP memberships
+anno <- data.frame(subject=info$subject, subtype=info$subtype)
+rownames(anno) <- rownames(fit.gbcd$L)
+anno_colors <- list(subject=subject_col, subtype=subtype_col)
+cols <- colorRampPalette(c("gray96", "red"))(50)
+brks <- seq(0, 1, 0.02)
+
+### plot the annotated heatmap of GEP memberships
+pheatmap(fit.gbcd$L[order(anno$subject), -c(1)], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE, annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, angle_col = 45, fontsize = 10, color = cols, breaks = brks, main = "")
+```
+
+We next look at the matrix of GEP signature estimates $F$. Here we show the top rows of estimated $F$, and the corresponding $z$-score and $lfsr$. 
+
+```{r summary-lfc}
+head(round(fit.gbcd$F$lfc, 3))
+```
+
+```{r summary-z-score}
+head(round(fit.gbcd$F$z_score, 3))
+```
+
+```{r summary-lfsr}
+head(round(fit.gbcd$F$lfsr, 3))
+```
+
+
+
+# Session info {-}
+
+This is the version of R and the packages that were used to generate these results.
+
+```{r session-info}
+sessionInfo()
+```
+
+[hnscc]: https://www.sciencedirect.com/science/article/pii/S0092867417312709
+[hnscc_application]: file:///Users/yushaliu/Documents/single_cell_cancer/manuscript/code_submission/hnscc/gbcd_vignette.html
+[ebnm]: https://stephenslab.github.io/ebnm/
+[flashier]: https://github.com/willwerscheid/flashier

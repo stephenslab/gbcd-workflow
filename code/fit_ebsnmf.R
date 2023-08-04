@@ -6,37 +6,45 @@
 ### maxiter: a positive integer specifying the maximum number of iterations to backfit GEP memberships
 ### verbose: an integer specifying whether and how to display progress updates, as described in the flashier package
 fit.ebsnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, extrapolate = TRUE, maxiter = 500, verbose = 1){
-  
+
   ### fit EBMF with point laplace prior to gene expression data matrix
-  fit.mf <- flash.init(Y, S = 1/sqrt(nrow(Y)), var.type = 2
-                       ) %>% flash.add.greedy(Kmax = Kmax, ebnm.fn = ebnm::ebnm_point_laplace) %>% flash.backfit(maxiter = maxiter, verbose = verbose)
-  
+  fit.mf <- flash_init(Y, S = 1/sqrt(nrow(Y)), var_type = 2) %>%
+    flash_greedy(Kmax = Kmax, ebnm_fn = ebnm_point_laplace) %>%
+    flash_backfit(maxiter = maxiter, verbose = verbose)
+
   ### initialize EB-SNMF fit from the EBMF fit with point laplace prior
   snmf.init <- init.ebsnmf(fit.mf, 2e1)
-  
+
   ### fit EB-SNMF with a nonnegative prior on L to gene expression data matrix
-  fit.snmf <- flash.init(Y, S = 1/sqrt(nrow(Y)), var.type = 2) %>% flash.init.factors(
-    init = snmf.init, ebnm.fn = c(prior, ebnm::ebnm_point_laplace)) %>% flash.backfit(extrapolate = extrapolate, maxiter = 25, verbose = verbose)
-  
+  fit.snmf <- flash_init(Y, S = 1/sqrt(nrow(Y)), var_type = 2) %>%
+    flash_factors_init(
+      init = snmf.init,
+      ebnm_fn = c(prior, ebnm_point_laplace)
+    ) %>%
+    flash_backfit(extrapolate = extrapolate, maxiter = 25, verbose = verbose)
+
   ### keep at most Kmax factors based on proportion of variance explained and refit EB-SNMF to gene expression data matrix
   kset <- (length(fit.snmf$pve) - rank(fit.snmf$pve) < Kmax) & (fit.snmf$pve > 0)
-  fit.snmf <- flash.init(Y, S = 1/sqrt(nrow(Y)), var.type = 2) %>% flash.init.factors(
-    init = lapply(fit.snmf$flash.fit$EF, function(x) x[, kset]), ebnm.fn = c(prior, ebnm::ebnm_point_laplace)
-    ) %>% flash.backfit(extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)
+  fit.snmf <- flash_init(Y, S = 1/sqrt(nrow(Y)), var_type = 2) %>%
+    flash_factors_init(
+      init = lapply(fit.snmf$flash_fit$EF, function(x) x[, kset]),
+      ebnm_fn = c(prior, ebnm_point_laplace)
+    ) %>%
+    flash_backfit(extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)
 }
 
 
 ### initialize the EB-SNMF fit from an EBMF fit without nonnegative constraints on L
 init.ebsnmf <- function(fl, epsilon) {
-  LL <- fl$flash.fit$EF[[1]]
-  FF <- fl$flash.fit$EF[[2]]
-  
+  LL <- fl$flash_fit$EF[[1]]
+  FF <- fl$flash_fit$EF[[2]]
+
   LL <- cbind(pmax(LL, 0), pmax(-LL, 0))
   FF <- cbind(FF, -FF)
-  
+
   to.keep <- (colSums(LL) > epsilon)
   LL <- LL[, to.keep, drop = FALSE]
   FF <- FF[, to.keep, drop = FALSE]
-  
+
   return(list(LL, FF))
 }
