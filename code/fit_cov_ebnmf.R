@@ -6,7 +6,7 @@
 ### extrapolate: a logical indicator specifying whether to use extrapolation to accelerate backfitting GEP memberships; see the flashier package for details
 ### maxiter: a positive integer specifying the maximum number of iterations to backfit GEP memberships
 ### verbose: an integer specifying whether and how to display progress updates, as described in the flashier package
-fit.cov.ebnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres = 0.8, extrapolate = TRUE, maxiter = 500, verbose = 1){
+flash_fit_cov_ebmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres = 0.8, extrapolate = TRUE, maxiter = 500, verbose = 1){
 
   ### calculate the covariance matrix from the cell by gene matrix of gene expression data
   dat <- Y %*% t(Y)/ncol(Y)
@@ -18,10 +18,10 @@ fit.cov.ebnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres 
     flash_backfit(maxiter = maxiter, verbose = 1)
 
   ### fit EBMF with point laplace prior to covariance matrix with the diagonal component
-  fit.cov <- fit.ebcovmf(dat = dat, fl = fit.cov, prior = ebnm::ebnm_point_laplace, maxiter = maxiter, verbose = 1)$fl
+  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, prior = ebnm::ebnm_point_laplace, maxiter = maxiter, verbose = 1)$fl
 
   ### initialize EB-NMF fit from the EBMF fit with point laplace prior
-  cov.init <- init.cov.ebnmf(fit.cov)
+  cov.init <- init_cov_ebnmf(fit.cov)
   kmax <- which.max(colSums(cov.init[[1]]))
   fit.cov <- flash_init(dat, var_type = 0) %>%
     flash_factors_init(
@@ -35,7 +35,7 @@ fit.cov.ebnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres 
     flash_backfit(extrapolate = extrapolate, maxiter = 25, verbose = verbose)
 
   ### fit EB-NMF with a nonnegative prior to covariance matrix with the diagonal component
-  fit.cov <- fit.ebcovmf(dat = dat, fl = fit.cov, prior = prior, extrapolate = extrapolate, maxiter = 25, verbose = verbose)$fl
+  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, prior = prior, extrapolate = extrapolate, maxiter = 25, verbose = verbose)$fl
 
   ### keep at most Kmax factors based on proportion of variance explained and refit EB-NMF to covariance matrix
   kset <- (length(fit.cov$pve) - rank(fit.cov$pve) < 1.5*Kmax) & (fit.cov$pve > 0)
@@ -43,7 +43,7 @@ fit.cov.ebnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres 
   kall <- 1:fit.cov$n_factors
   if(!all(kset))
     fit.cov <- flash_factors_remove(fit.cov, kset=kall[!kset])
-  fit.cov <- fit.ebcovmf(dat = dat, fl = fit.cov, prior = prior, extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)$fl
+  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, prior = prior, extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)$fl
 
   ### scale GEP membership estimates to 0-1 scale, and calculate Pearson correlations between L and L-tilde
   k.order <- order(fit.cov$pve, decreasing = TRUE)
@@ -102,25 +102,22 @@ fit.cov.ebnmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres 
 
 
 ### initialize the EB-NMF fit to covariance matrix YY' s.t. E[YY'] = LL'+ D from an estimate of L without nonnegative constraints
-init.cov.ebnmf <- function(fl, kset = 1:ncol(fl$flash_fit$EF[[1]])) {
+init_cov_ebnmf <- function(fl, kset = 1:ncol(fl$flash_fit$EF[[1]])) {
   LL <- fl$flash_fit$EF[[1]][, kset, drop = FALSE]
   FF <- fl$flash_fit$EF[[2]][, kset, drop = FALSE]
-
   LL <- cbind(pmax(LL, 0), pmax(-LL, 0))
   LL <- cbind(fl$flash_fit$EF[[1]][, -kset, drop = FALSE], LL)
   FF <- cbind(pmax(FF, 0), pmax(-FF, 0))
   FF <- cbind(fl$flash_fit$EF[[2]][, -kset, drop = FALSE], FF)
-
   to.keep <- (colSums(LL) > .Machine$double.eps) & (colSums(FF) > .Machine$double.eps)
   LL <- LL[, to.keep, drop = FALSE]
   FF <- FF[, to.keep, drop = FALSE]
-
   return(list(LL, FF))
 }
 
 
 ### fit EBMF to covariance matrix YY' s.t. E[YY'] = LL'+ D, where D = s2*I and I is an identity matrix
-fit.ebcovmf <- function(dat, fl, prior, extrapolate = TRUE, maxiter = 500, epsilon = 0, verbose = 1){
+fit_ebmf_to_YY <- function(dat, fl, prior, extrapolate = TRUE, maxiter = 500, epsilon = 0, verbose = 1){
   s2 <- max(0, mean(diag(dat) - diag(fitted(fl))))
   s2_diff <- Inf
 
