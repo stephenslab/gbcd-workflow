@@ -6,7 +6,9 @@
 ### extrapolate: a logical indicator specifying whether to use extrapolation to accelerate backfitting GEP memberships; see the flashier package for details
 ### maxiter: a positive integer specifying the maximum number of iterations to backfit GEP memberships
 ### verbose: an integer specifying whether and how to display progress updates, as described in the flashier package
-flash_fit_cov_ebmf <- function(Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres = 0.8, extrapolate = TRUE, maxiter = 500, verbose = 1){
+flash_fit_cov_ebnmf <-
+  function (Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres = 0.8,
+            extrapolate = TRUE, maxiter = 500, verbose = 1) {
 
   ### calculate the covariance matrix from the cell by gene matrix of gene expression data
   dat <- Y %*% t(Y)/ncol(Y)
