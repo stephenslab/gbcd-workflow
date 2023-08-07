@@ -96,9 +96,11 @@ Visualize HNSCC data using *t*-SNE
 
 We plot the 2-D *t*-SNE embedding of these $2,176$ malignant cells,
 which are colored by patient of origin and tumor stage (primary tumor,
-LN metastasis), and shaped by tumor molecular subtype.
+LN metastasis), and shaped by tumor molecular subtype. We set seed to
+make the *t*-SNE reproducible. 
 
 ```{r run-tSNE, warnings=FALSE, messages=FALSE}
+set.seed(100)
 hnscc <- CreateSeuratObject(counts = t(Y), project = "HNSCC", meta.data = info)
 hnscc <- FindVariableFeatures(hnscc, selection.method = "vst",
                               nfeatures = 5000)
