@@ -1,13 +1,7 @@
 ---
-title: "Dissecting tumor transcriptional heterogeneity from multi-tumor single-cell RNA-seq data using generalized binary covariance decomposition"
+title: "Dissecting tumor transcriptional heterogeneity from multi-tumor single-cell RNA-seq data using GBCD"
 author: Yusha Liu
-date: "`r Sys.Date()`"
-output:
-  html_document:
-    toc: yes
-    toc_float: no
-    highlight: textmate
-    theme: readable
+output: workflowr::wflow_html
 ---
 
 Overview
@@ -86,7 +80,7 @@ $y_{ij} = \log_2(1 + \mathrm{TPM}_{ij}/10)$, where $\mathrm{TPM}_{ij}$
 is the transcript-per-million (TPM) value for gene $j$ in cell $i$.
 
 ```{r load-data}
-load("hnscc.RData")
+load("../hnscc/hnscc.RData")
 dim(Y)
 print(head(info),row.names = FALSE)
 ```
@@ -170,7 +164,7 @@ load in the saved output from the above call and show how to interpret
 the results.
 
 ```{r load-fit}
-load("hnscc_gbcd.RData")
+load("../hnscc/hnscc_gbcd.RData")
 ```
 
 The `flash_fit_cov_ebnmf` output contains the membership estimates,
