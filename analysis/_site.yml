@@ -10,7 +10,7 @@ navbar:
       href: https://github.com/stephenslab/gbcd-workflow
 output:
   workflowr::wflow_html:
-    toc: yes
+    toc: no
     toc_float: no
     theme: readable
     highlight: textmate
