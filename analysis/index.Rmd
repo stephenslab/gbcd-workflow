@@ -1,6 +1,6 @@
 ---
 title: Analysis of scRNA-seq data from malignant cells using GBCD
-author: Yusha Liui
+author: Yusha Liu
 site: workflowr::wflow_site
 output: workflowr::wflow_html
 ---
