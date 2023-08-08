@@ -1,11 +1,12 @@
 ---
-title: "Home"
+title: Analysis of scRNA-seq data from malignant cells using GBCD
+author: Yusha Liui
 site: workflowr::wflow_site
-output:
-  workflowr::wflow_html:
-    toc: false
-editor_options:
-  chunk_output_type: console
+output: workflowr::wflow_html
 ---
 
-Welcome to my research website.
+Tutorials
+---------
+
++ [Dissecting tumor transcriptional heterogeneity from multi-tumor single-cell RNA-seq data using GBCD](gbcd_hnscc_intro.html)
+

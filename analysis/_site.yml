@@ -1,17 +1,18 @@
-name: "gbcd-workflow"
+name: gbcd workflow
 output_dir: ../docs
 navbar:
-  title: "gbcd-workflow"
+  title: gbcd workflow
   left:
-  - text: Home
+  - text: Overview
     href: index.html
-  - text: About
-    href: about.html
-  - text: License
-    href: license.html
+  right:
+    - text: source
+      href: https://github.com/stephenslab/gbcd-workflow
 output:
   workflowr::wflow_html:
     toc: yes
-    toc_float: yes
-    theme: cosmo
+    toc_float: no
+    theme: readable
     highlight: textmate
+    lib_dir: site_libs
+    self_contained: no
