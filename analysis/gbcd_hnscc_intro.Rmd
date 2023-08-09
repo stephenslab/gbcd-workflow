@@ -93,7 +93,7 @@ which are colored by patient of origin and tumor stage (primary tumor,
 LN metastasis), and shaped by tumor molecular subtype. We set seed to
 make the *t*-SNE reproducible. 
 
-```{r run-tSNE, warnings=FALSE, messages=FALSE}
+```{r run-tSNE, warning=FALSE, message=FALSE}
 set.seed(100)
 hnscc <- CreateSeuratObject(counts = t(Y), project = "HNSCC", meta.data = info)
 hnscc <- FindVariableFeatures(hnscc, selection.method = "vst",
@@ -110,7 +110,7 @@ demonstrate strong patient effects that are typical of cancer data;
 the major structure in the *t*-SNE visualization is the clustering of
 the cells by patient.
 
-```{r plot-tSNE, fig.height=4, fig.width=5}
+```{r plot-tSNE, fig.height=4, fig.width=5, warning=FALSE, message=FALSE}
 DimPlot(hnscc, label = TRUE, repel = TRUE, pt.size = 1, reduction = "tsne",
         group.by = "subject", shape.by = "subtype", cols = subject_col) +
   guides(shape = guide_legend(override.aes = list(size = 3)), ncol = 1) +
