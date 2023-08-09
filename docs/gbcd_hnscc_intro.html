@@ -432,15 +432,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreef9fe46de16323cdf0a389003dfb16572c50f75f2targetblankf9fe46da">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreef2b1d24787754c18ab34093d806ddbcdfb7ac452targetblankf2b1d24a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/stephenslab/gbcd-workflow/tree/f9fe46de16323cdf0a389003dfb16572c50f75f2" target="_blank">f9fe46d</a>
+<a href="https://github.com/stephenslab/gbcd-workflow/tree/f2b1d24787754c18ab34093d806ddbcdfb7ac452" target="_blank">f2b1d24</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreef9fe46de16323cdf0a389003dfb16572c50f75f2targetblankf9fe46da"
+id="strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreef2b1d24787754c18ab34093d806ddbcdfb7ac452targetblankf2b1d24a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -450,7 +450,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/stephenslab/gbcd-workflow/tree/f9fe46de16323cdf0a389003dfb16572c50f75f2" target="_blank">f9fe46d</a>.
+<a href="https://github.com/stephenslab/gbcd-workflow/tree/f2b1d24787754c18ab34093d806ddbcdfb7ac452" target="_blank">f2b1d24</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -509,6 +509,40 @@ Message
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>
+Rmd
+</td>
+<td>
+<a href="https://github.com/stephenslab/gbcd-workflow/blob/f2b1d24787754c18ab34093d806ddbcdfb7ac452/analysis/gbcd_hnscc_intro.Rmd" target="_blank">f2b1d24</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2023-08-08
+</td>
+<td>
+workflowr::wflow_publish("gbcd_hnscc_intro.Rmd", verbose = TRUE)
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/stephenslab/gbcd-workflow/d40f7d0624738c58682fd5be5d35b43b0e7af974/docs/gbcd_hnscc_intro.html" target="_blank">d40f7d0</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2023-08-08
+</td>
+<td>
+Built the gbcd_hnscc_intro workflowr page.
+</td>
+</tr>
 <tr>
 <td>
 Rmd
@@ -644,13 +678,10 @@ shaped by tumor molecular subtype. We set seed to make the
 <em>t</em>-SNE reproducible.</p>
 <pre class="r"><code>set.seed(100)
 hnscc &lt;- CreateSeuratObject(counts = t(Y), project = &quot;HNSCC&quot;, meta.data = info)
-# Warning: Feature names cannot have underscores (&#39;_&#39;), replacing with dashes
-# (&#39;-&#39;)
 hnscc &lt;- FindVariableFeatures(hnscc, selection.method = &quot;vst&quot;,
                               nfeatures = 5000)
 all.genes &lt;- rownames(hnscc)
 hnscc &lt;- ScaleData(hnscc, features = all.genes)
-# Centering and scaling data matrix
 hnscc &lt;- RunPCA(hnscc, features = VariableFeatures(object = hnscc),
                 npcs = 50, verbose = FALSE)
 hnscc &lt;- RunTSNE(hnscc, dims = 1:50)</code></pre>
@@ -662,11 +693,45 @@ the cells by patient.</p>
         group.by = &quot;subject&quot;, shape.by = &quot;subtype&quot;, cols = subject_col) +
   guides(shape = guide_legend(override.aes = list(size = 3)), ncol = 1) +
   theme(text = element_text(size = 10)) +
-  scale_shape_manual(values = c(15,16,18))
-# Warning: Using `as.character()` on a quosure is deprecated as of rlang 0.3.0.
-# Please use `as_label()` or `as_name()` instead.
-# This warning is displayed once per session.</code></pre>
+  scale_shape_manual(values = c(15,16,18))</code></pre>
 <p><img src="figure/gbcd_hnscc_intro.Rmd/plot-tSNE-1.png" width="600" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-tSNE-1">
+Past versions of plot-tSNE-1.png
+</button>
+</p>
+<div id="fig-plot-tSNE-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/stephenslab/gbcd-workflow/blob/d40f7d0624738c58682fd5be5d35b43b0e7af974/docs/figure/gbcd_hnscc_intro.Rmd/plot-tSNE-1.png" target="_blank">d40f7d0</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2023-08-08
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 </div>
 <div id="apply-gbcd-to-estimate-gep-memberships-and-signatures"
 class="section level2">
@@ -762,6 +827,43 @@ p &lt;- pheatmap(fit.gbcd$L[rows, -1], cluster_rows = FALSE, cluster_cols = FALS
          main = &quot;&quot;)
 print(p)         </code></pre>
 <p><img src="figure/gbcd_hnscc_intro.Rmd/plot-L-1.png" width="840" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-L-1">
+Past versions of plot-L-1.png
+</button>
+</p>
+<div id="fig-plot-L-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/stephenslab/gbcd-workflow/blob/d40f7d0624738c58682fd5be5d35b43b0e7af974/docs/figure/gbcd_hnscc_intro.Rmd/plot-L-1.png" target="_blank">d40f7d0</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2023-08-08
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <p>This heatmap shows the membership values of the n = 2,176 cells (the
 rows in the heatmap) and the 28 GEPs (the columns in the heatmap). (The
 membership values for the “baseline” GEP are not shown.) Cells are
@@ -809,6 +911,43 @@ ggplot(pdat, aes(x = lfc, y = z, color = lfsr, label = gene)) +
   labs(x = &quot;log-fold change&quot;, y = &quot;|posterior z-score|&quot;) + 
   theme_cowplot(font_size = 10)</code></pre>
 <p><img src="figure/gbcd_hnscc_intro.Rmd/plot-lfc-1.png" width="600" style="display: block; margin: auto;" /></p>
+<p>
+<button type="button" class="btn btn-default btn-xs btn-workflowr btn-workflowr-fig" data-toggle="collapse" data-target="#fig-plot-lfc-1">
+Past versions of plot-lfc-1.png
+</button>
+</p>
+<div id="fig-plot-lfc-1" class="collapse">
+<div class="table-responsive">
+<table class="table table-condensed table-hover">
+<thead>
+<tr>
+<th>
+Version
+</th>
+<th>
+Author
+</th>
+<th>
+Date
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>
+<a href="https://github.com/stephenslab/gbcd-workflow/blob/d40f7d0624738c58682fd5be5d35b43b0e7af974/docs/figure/gbcd_hnscc_intro.Rmd/plot-lfc-1.png" target="_blank">d40f7d0</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2023-08-08
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <p>The significance measure here is not a <em>p</em>-value, but rather a
 <a href="https://doi.org/10.1093/biostatistics/kxw041">local false sign
 rate (lfsr)</a>.</p>
