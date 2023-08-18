@@ -9,7 +9,6 @@ library(gridExtra)
 library(Seurat)
 
 ### load in the HNSCC data, including the library size normalized and log-transformed scRNA-seq data and annotations for cells
-setwd("hnscc")
 load("hnscc.RData")
 
 ### run tSNE
@@ -24,8 +23,6 @@ hnscc <- RunTSNE(hnscc, dims = 1:50)
 DimPlot(hnscc, label = TRUE, repel = TRUE, pt.size = 1.5, label.size = 5, reduction = "tsne", group.by = "subject", shape.by = "subtype",
         cols = subject_col) + guides(shape = guide_legend(override.aes = list(size = 3)), ncol = 1) + theme(text = element_text(size = 20)) +
   ggtitle("") + scale_shape_manual(values = c(15, 16, 18))
-
-
 
 ##################################### apply GBCD to the HNSCC data to estimate GEP memberships and signatures #####################################
 ### load in required packages to run GBCD

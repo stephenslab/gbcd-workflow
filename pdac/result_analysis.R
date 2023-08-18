@@ -1,6 +1,5 @@
 ### this script shows the analyses performed on the PDAC data, and reproduces the relevant figures in the paper 
 ### note that the script for survival analysis on bulk RNA-seq data is located in the folder survival/ 
-setwd("pdac")
 
 ### load in the required packages
 library(Matrix)
@@ -22,10 +21,8 @@ library(reshape2)
 ### load in the sample and cohort annotation for malignant cells from all three cohorts
 load("pdac_annotation.RData")
 
-
-
 ######################################### plot tsne of the single cell rna seq data (Fig. 3A) #########################################
-### load in the combined UMI counts from all cohorts (we do not share the PDAC data, because part of the data has controlled access)
+### load in the combined UMI counts from all cohorts (we cannot share the PDAC data, because part of the data has controlled access)
 load("pdac.RData")
 
 ### run tSNE

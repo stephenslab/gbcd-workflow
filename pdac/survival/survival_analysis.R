@@ -1,5 +1,5 @@
-### this script performs survival analysis on PDAC bulk RNA-seq data using shared GEPs from gbcd and literature-derived subtype signatures (Fig. 4)
-setwd("pdac")
+### this script performs survival analysis on PDAC bulk RNA-seq data using shared GEPs from gbcd and literature-derived subtype signatures (Fig. 4).
+# It should be run from the "pdac" directory.
 
 ### load in the required packages
 library(Matrix)

@@ -1,5 +1,4 @@
 ### this script shows the analyses performed on the HNSCC data, and reproduces the relevant figures in the paper 
-setwd("hnscc")
 
 ### load in the required packages
 library(Matrix)
@@ -19,8 +18,6 @@ library(reshape2)
 
 ### load in the HNSCC data, including the library size normalized and log-transformed scRNA-seq data and annotations for cells
 load("hnscc.RData")
-
-
 
 ######################################### plot tsne of the single cell rna seq data (Fig. 2A) #########################################
 ### run tSNE

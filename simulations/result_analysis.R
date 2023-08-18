@@ -1,5 +1,4 @@
 ### this script shows the analyses performed on the simulated data, and reproduces the relevant figures in the paper 
-setwd("simulations")
 
 ### load in the required packages
 library(Matrix)

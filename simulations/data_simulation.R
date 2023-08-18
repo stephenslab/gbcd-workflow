@@ -1,9 +1,7 @@
-setwd("simulations")
 library(Matrix)
 library(splatter)
 library(scran)
 library(seqgendiff)
-
 
 ##################################### simulate the single cell RNA-seq data for 20 replicates ##################################################
 ### load in the Splatter model parameters estimated from one PDAC dataset
