@@ -131,7 +131,7 @@ GBCD is close to but often not equal to (and can be larger than)
 finer structure in tumor transcriptional heterogeneity at the expense
 of higher computational cost. A good choice of `Kmax` depends on the
 complexity of the analyzed data (e.g., the number of patients and
-studies contained), and is often unknown in advance. You1 are
+studies contained), and is often unknown in advance. You are
 encouraged to explore and compare the results for different values of
 `Kmax`. After some initial exploration, we set `Kmax` to 24.
 

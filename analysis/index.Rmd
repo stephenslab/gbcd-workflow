@@ -10,15 +10,18 @@ output: workflowr::wflow_html
 This repository contains code and data resources to accompany our research paper:
 
 > Yusha Liu, Peter Carbonetto, Jason Willwerscheid, Scott A. Oakes, Kay F. Macleod, and Matthew Stephens (2023). 
-> *Dissecting tumor transcriptional heterogeneity from single-cell RNA-seq data by generalized binary covariance decomposition
-> studies with multiple conditions.* bioRxiv
-> [doi:10.1101/2023.08.15.553436][paper-link].
+> *Dissecting tumor transcriptional heterogeneity from single-cell RNA-seq data by generalized binary covariance decomposition.*
+>  bioRxiv [doi:10.1101/2023.08.15.553436][paper-link].
 
 We provide the following resources:
 
 1. A [vignette](gbcd_hnscc_intro.html) that shows how to use GBCD to dissect tumor transcriptional heterogeneity through analysis of multi-tumor single-cell RNA-seq (scRNA-seq) data. We illustrate this using a head and neck squamous cell carcinoma (HNSCC) dataset analyzed in our research paper.
 
 2. The [scripts][gbcd-workflow] that reproduce the results and figures presented in the research paper. 
+
+
+## Installation instructions
+Implementing GBCD requires installing the R packages [ashr (version 2.2-54)][ashr], [ebnm (version 1.0-42)][ebnm] and [flashier (version 0.2.50)][flashier], which were previously developed by [our lab][stephenslab]. All the analyses in this research paper were performed in [R][r-language] (version 4.1.0). 
 
 
 ## Citing this work
@@ -62,6 +65,9 @@ Please note that running these scripts may give you results that are slightly di
 
 [paper-link]: https://doi.org/10.1101/2023.08.15.553436
 [gbcd-workflow]: https://github.com/stephenslab/gbcd-workflow
+[r-language]: https://www.r-project.org
+[ashr]: https://github.com/stephens999/ashr
 [ebnm]: https://stephenslab.github.io/ebnm/
 [flashier]: https://github.com/willwerscheid/flashier
+[stephenslab]: https://stephenslab.uchicago.edu
 [mit-license]: https://opensource.org/licenses/mit-license.html
