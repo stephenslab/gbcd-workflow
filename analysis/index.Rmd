@@ -1,12 +1,67 @@
 ---
-title: Analysis of scRNA-seq data from malignant cells using GBCD
+title: Dissecting tumor transcriptional heterogeneity from single-cell RNA-seq data by generalized binary covariance decomposition (GBCD)
 author: Yusha Liu
 site: workflowr::wflow_site
 output: workflowr::wflow_html
 ---
 
-Tutorials
----------
+## Overview
 
-+ [Dissecting tumor transcriptional heterogeneity from multi-tumor single-cell RNA-seq data using GBCD](gbcd_hnscc_intro.html)
+This repository contains code and data resources to accompany our research paper:
 
+> Yusha Liu, Peter Carbonetto, Jason Willwerscheid, Scott A. Oakes, Kay F. Macleod, and Matthew Stephens (2023). 
+> *Dissecting tumor transcriptional heterogeneity from single-cell RNA-seq data by generalized binary covariance decomposition
+> studies with multiple conditions.* bioRxiv
+> [doi:10.1101/2023.08.15.553436][paper-link].
+
+We provide the following resources:
+
+1. A [vignette](gbcd_hnscc_intro.html) that shows how to use GBCD to dissect tumor transcriptional heterogeneity through analysis of multi-tumor single-cell RNA-seq (scRNA-seq) data. We illustrate this using a head and neck squamous cell carcinoma (HNSCC) dataset analyzed in our research paper.
+
+2. The [scripts][gbcd-workflow] that reproduce the results and figures presented in the research paper. 
+
+
+## Citing this work
+
+If you find any material in this repository useful for your work, please cite our research paper. 
+
+
+## License
+
+All source code and software in this repository are made available under the terms of the [MIT license][mit-license].
+
+
+## What's included in the git repository
+
+See [here][gbcd-workflow] for the source repository. This is what you will find in the repository:
+
+```
+├── analysis
+├── code
+├── docs
+├── hnscc
+├── pdac
+└── simulations
+
+```
+
++ The **analysis** contains R Markdown source files for the workflowr website, including a [vignette](gbcd_hnscc_intro.html) illustrating how to apply GBCD to analyze your own scRNA-seq data from *malignant cells* collected from multiple patients and/or studies.
+
++ The **code** directory contains the R source code to implement GBCD, using the functions defined in the [ebnm][ebnm] and [flashier][flashier] packages previously developed by our lab.
+
++ The **docs** directory contains webpages generated from the R Markdown files in the analysis directory.
+
++ The **hnscc** directory stores the preprocessed HNSCC dataset analyzed in our research paper, and the results and analysis scripts of the HNSCC data to reproduce the relevant figures in the research paper. 
+
++ The **pdac** directory stores the results and analysis scripts of the pancreatic cancer adenocarcinoma data to reproduce the relevant figures in the research paper. 
+
++ The **simulations** directory stores the results and analysis scripts related to the simulation study to reproduce the relevant figures in the research paper. 
+
+Please note that running these scripts may give you results that are slightly different from those presented in the paper (which were generated much earlier), particularly the GBCD results, due to version updates of the model fitting algorithm. However, the conclusions reported in the paper remain unaffected. 
+
+
+[paper-link]: https://doi.org/10.1101/2023.08.15.553436
+[gbcd-workflow]: https://github.com/stephenslab/gbcd-workflow
+[ebnm]: https://stephenslab.github.io/ebnm/
+[flashier]: https://github.com/willwerscheid/flashier
+[mit-license]: https://opensource.org/licenses/mit-license.html
