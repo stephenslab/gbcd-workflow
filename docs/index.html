@@ -12,9 +12,9 @@
 <meta name="author" content="Yusha Liu" />
 
 
-<title>Analysis of scRNA-seq data from malignant cells using GBCD</title>
+<title>Dissecting tumor transcriptional heterogeneity from single-cell RNA-seq data by generalized binary covariance decomposition (GBCD)</title>
 
-<script src="site_libs/header-attrs-2.21/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -152,15 +152,11 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark the anchor link active (and if it's in a dropdown, also mark that active)
-  var dropdown = menuAnchor.closest('li.dropdown');
-  if (window.bootstrap) { // Bootstrap 4+
-    menuAnchor.addClass('active');
-    dropdown.find('> .dropdown-toggle').addClass('active');
-  } else { // Bootstrap 3
-    menuAnchor.parent().addClass('active');
-    dropdown.addClass('active');
-  }
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -189,8 +185,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "\e259";
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -198,9 +194,16 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "\e258";
-  font-family: 'Glyphicons Halflings';
+  content: "&#xe258;";
   border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -270,8 +273,9 @@ $(document).ready(function () {
 
 
 
-<h1 class="title toc-ignore">Analysis of scRNA-seq data from malignant
-cells using GBCD</h1>
+<h1 class="title toc-ignore">Dissecting tumor transcriptional
+heterogeneity from single-cell RNA-seq data by generalized binary
+covariance decomposition (GBCD)</h1>
 <h4 class="author">Yusha Liu</h4>
 
 </div>
@@ -301,7 +305,7 @@ class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2023-08-08
+<strong>Last updated:</strong> 2023-08-18
 </p>
 <p>
 <strong>Checks:</strong> <span
@@ -319,7 +323,7 @@ title="This is the local directory in which the code in this file was executed."
 This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
 analysis was created with <a
   href="https://github.com/workflowr/workflowr">workflowr</a> (version
-1.7.0.5). The <em>Checks</em> tab describes the reproducibility checks
+1.7.0). The <em>Checks</em> tab describes the reproducibility checks
 that were applied when the results were created. The <em>Past
 versions</em> tab lists the development history.
 </p>
@@ -348,15 +352,15 @@ results.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtree8d6197d4ee9c196f14610955a4f3c8bad99ddedetargetblank8d6197da">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreea788fb984350bc6d9db743716a58b8710d0996d5targetblanka788fb9a">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/stephenslab/gbcd-workflow/tree/8d6197d4ee9c196f14610955a4f3c8bad99ddede" target="_blank">8d6197d</a>
+<a href="https://github.com/stephenslab/gbcd-workflow/tree/a788fb984350bc6d9db743716a58b8710d0996d5" target="_blank">a788fb9</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtree8d6197d4ee9c196f14610955a4f3c8bad99ddedetargetblank8d6197da"
+id="strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreea788fb984350bc6d9db743716a58b8710d0996d5targetblanka788fb9a"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -366,7 +370,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/stephenslab/gbcd-workflow/tree/8d6197d4ee9c196f14610955a4f3c8bad99ddede" target="_blank">8d6197d</a>.
+<a href="https://github.com/stephenslab/gbcd-workflow/tree/a788fb984350bc6d9db743716a58b8710d0996d5" target="_blank">a788fb9</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -380,8 +384,24 @@ depends on. Below is the status of the Git repository when the results
 were generated:
 </p>
 <pre><code>
+Untracked files:
+    Untracked:  .DS_Store
+    Untracked:  hnscc/.DS_Store
+    Untracked:  pdac/.DS_Store
+    Untracked:  simulations/.DS_Store
+    Untracked:  simulations/output/.DS_Store
+
 Unstaged changes:
-    Modified:   analysis/_site.yml
+    Modified:   README.md
+    Modified:   code/fit_ebsnmf.R
+    Modified:   hnscc/hnscc_gbcd.R
+    Modified:   hnscc/result_analysis.R
+    Modified:   pdac/result_analysis.R
+    Modified:   simulations/ebsnmf.R
+    Modified:   simulations/gbcd.R
+    Modified:   simulations/output/iter2_gb_snmf.rds
+    Modified:   simulations/output/iter2_point_exponential_snmf.rds
+    Modified:   simulations/point_exponential_cd.R
 
 </code></pre>
 <p>
@@ -431,13 +451,47 @@ Message
 Rmd
 </td>
 <td>
+<a href="https://github.com/stephenslab/gbcd-workflow/blob/a788fb984350bc6d9db743716a58b8710d0996d5/analysis/index.Rmd" target="_blank">a788fb9</a>
+</td>
+<td>
+YushaLiu
+</td>
+<td>
+2023-08-18
+</td>
+<td>
+Update index.Rmd
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/stephenslab/gbcd-workflow/3e5891c7beb248b67c65fa82eceac7e0b6fbfaf7/docs/index.html" target="_blank">3e5891c</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2023-08-09
+</td>
+<td>
+Small fix to the overview page.
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
 <a href="https://github.com/stephenslab/gbcd-workflow/blob/8d6197d4ee9c196f14610955a4f3c8bad99ddede/analysis/index.Rmd" target="_blank">8d6197d</a>
 </td>
 <td>
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 <td>
 workflowr::wflow_publish("index.Rmd")
@@ -454,7 +508,7 @@ html
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 <td>
 Built the overview page.
@@ -471,7 +525,7 @@ Rmd
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 <td>
 Updated the workflowr config.
@@ -488,7 +542,7 @@ Rmd
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 <td>
 Ran wflow_start().
@@ -501,13 +555,84 @@ Ran wflow_start().
 </div>
 </div>
 </div>
-<div id="tutorials" class="section level2">
-<h2>Tutorials</h2>
+<div id="overview" class="section level2">
+<h2>Overview</h2>
+<p>This repository contains code and data resources to accompany our
+research paper:</p>
+<blockquote>
+<p>Yusha Liu, Peter Carbonetto, Jason Willwerscheid, Scott A. Oakes, Kay
+F. Macleod, and Matthew Stephens (2023). <em>Dissecting tumor
+transcriptional heterogeneity from single-cell RNA-seq data by
+generalized binary covariance decomposition studies with multiple
+conditions.</em> bioRxiv <a
+href="https://doi.org/10.1101/2023.08.15.553436">doi:10.1101/2023.08.15.553436</a>.</p>
+</blockquote>
+<p>We provide the following resources:</p>
+<ol style="list-style-type: decimal">
+<li><p>A <a href="gbcd_hnscc_intro.html">vignette</a> that shows how to
+use GBCD to dissect tumor transcriptional heterogeneity through analysis
+of multi-tumor single-cell RNA-seq (scRNA-seq) data. We illustrate this
+using a head and neck squamous cell carcinoma (HNSCC) dataset analyzed
+in our research paper.</p></li>
+<li><p>The <a
+href="https://github.com/stephenslab/gbcd-workflow">scripts</a> that
+reproduce the results and figures presented in the research
+paper.</p></li>
+</ol>
+</div>
+<div id="citing-this-work" class="section level2">
+<h2>Citing this work</h2>
+<p>If you find any material in this repository useful for your work,
+please cite our research paper.</p>
+</div>
+<div id="license" class="section level2">
+<h2>License</h2>
+<p>All source code and software in this repository are made available
+under the terms of the <a
+href="https://opensource.org/licenses/mit-license.html">MIT
+license</a>.</p>
+</div>
+<div id="whats-included-in-the-git-repository" class="section level2">
+<h2>What’s included in the git repository</h2>
+<p>See <a href="https://github.com/stephenslab/gbcd-workflow">here</a>
+for the source repository. This is what you will find in the
+repository:</p>
+<pre><code>├── analysis
+├── code
+├── docs
+├── hnscc
+├── pdac
+└── simulations
+</code></pre>
 <ul>
-<li><a href="gbcd_hnscc_intro.html">Dissecting tumor transcriptional
-heterogeneity from multi-tumor single-cell RNA-seq data using
-GBCD</a></li>
+<li><p>The <strong>analysis</strong> contains R Markdown source files
+for the workflowr website, including a <a
+href="gbcd_hnscc_intro.html">vignette</a> illustrating how to apply GBCD
+to analyze your own scRNA-seq data from <em>malignant cells</em>
+collected from multiple patients and/or studies.</p></li>
+<li><p>The <strong>code</strong> directory contains the R source code to
+implement GBCD, using the functions defined in the <a
+href="https://stephenslab.github.io/ebnm/">ebnm</a> and <a
+href="https://github.com/willwerscheid/flashier">flashier</a> packages
+previously developed by our lab.</p></li>
+<li><p>The <strong>docs</strong> directory contains webpages generated
+from the R Markdown files in the analysis directory.</p></li>
+<li><p>The <strong>hnscc</strong> directory stores the preprocessed
+HNSCC dataset analyzed in our research paper, and the results and
+analysis scripts of the HNSCC data to reproduce the relevant figures in
+the research paper.</p></li>
+<li><p>The <strong>pdac</strong> directory stores the results and
+analysis scripts of the pancreatic cancer adenocarcinoma data to
+reproduce the relevant figures in the research paper.</p></li>
+<li><p>The <strong>simulations</strong> directory stores the results and
+analysis scripts related to the simulation study to reproduce the
+relevant figures in the research paper.</p></li>
 </ul>
+<p>Please note that running these scripts may give you results that are
+slightly different from those presented in the paper (which were
+generated much earlier), particularly the GBCD results, due to version
+updates of the model fitting algorithm. However, the conclusions
+reported in the paper remain unaffected.</p>
 </div>
 
 
