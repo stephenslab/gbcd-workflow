@@ -42,6 +42,24 @@ DimPlot(pdac, label = TRUE, repel = TRUE, pt.size = 1.1, label.size = 5, reducti
 
 
 
+##################################### apply GBCD to the PDAC data to estimate GEP memberships and signatures #####################################
+### load in required packages to run GBCD
+library(ebnm)
+library(flashier)
+library(magrittr)
+library(ashr)
+
+### load in custom functions to implement GBCD
+source("../code/fit_cov_ebnmf.R")
+
+### fit GBCD to estimate GEP memberships and signatures
+### The runtime depends on the size of the dataset being analyzed, the number of maximum GEPs and the computing environment.
+### It takes about 50 hours to fit 32 GEPs for the combined PDAC data containing 35,670 cells.
+fit.gbcd <- flash_fit_cov_ebnmf(Y = scdata.combined.logpc, Kmax = 32, prior = as.ebnm.fn(prior_family = "generalized_binary", scale = 0.02), 
+                                maxiter = 300, extrapolate = FALSE)
+
+
+
 ######################################### plot heatmap of GEP memberships produced by gbcd (Fig. 3B) #########################################
 ### load in gbcd fit
 fit.gbcd <- readRDS("pdac_gbcd_paper.rds")
