@@ -1,5 +1,6 @@
-args = commandArgs(trailingOnly=TRUE)
-iter = as.integer(args[1])
+# Set this to a number between 1 and 20 
+# to load one of the simulated data sets.
+iter <- 1
 
 library(Matrix)
 library(rliger)
