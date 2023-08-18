@@ -35,6 +35,24 @@ DimPlot(hnscc, label = TRUE, repel = TRUE, pt.size = 1.5, label.size = 5, reduct
 
 
 
+##################################### apply GBCD to the HNSCC data to estimate GEP memberships and signatures #####################################
+### load in required packages to run GBCD
+library(ebnm)
+library(flashier)
+library(magrittr)
+library(ashr)
+
+### load in the custom functions to implement GBCD
+source("../code/fit_cov_ebnmf.R")
+
+### fit GBCD to estimate GEP memberships and signatures
+### The runtime depends on the size of the dataset being analyzed, the number of maximum GEPs and the computing environment.
+### It takes about 2 to 3 hours to fit 24 GEPs for the HNSCC dataset containing 2,176 cells.
+fit.gbcd <- flash_fit_cov_ebnmf(Y = Y, Kmax = 24, prior = as.ebnm.fn(prior_family = "generalized_binary", scale = 0.04), extrapolate = FALSE)
+save(fit.gbcd, file = "hnscc_gbcd.RData")
+
+
+
 ######################################### plot heatmap of GEP memberships produced by gbcd (Fig. 2B) #########################################
 ### load in gbcd fit (note this is slightly different from the gbcd fit shared in the vignette that we generated much later, 
 ### as we have been improving the way we implement gbcd and organize the output since we obtained the results presented in the paper)
