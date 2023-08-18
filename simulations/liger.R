@@ -1,6 +1,6 @@
 # Set this to a number between 1 and 20 
 # to load one of the simulated data sets.
-iter <- 1
+iter <- 2
 
 library(Matrix)
 library(rliger)
