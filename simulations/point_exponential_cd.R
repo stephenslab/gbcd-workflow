@@ -15,6 +15,6 @@ source("../code/fit_cov_ebnmf.R")
 data <- readRDS(paste0("data/iter", iter, ".rds"))
 
 ### estimate GEP memberships and signatures by fitting EBMF based on covariance decomposition, with point exponential prior on GEP memberships
-fit.cd <- fit.cov.ebnmf(Y = data$Y, Kmax = 16, prior = ebnm::ebnm_point_exponential, thres = 0.9, extrapolate = FALSE)
+fit.cd <- flash_fit_cov_ebnmf(Y = data$Y, Kmax = 16, prior = ebnm::ebnm_point_exponential, thres = 0.9, extrapolate = FALSE)
 saveRDS(fit.cd, paste0("output/iter", iter, "_point_exponential_cd.rds"))
 

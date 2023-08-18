@@ -25,7 +25,7 @@ load("pdac_annotation.RData")
 
 
 ######################################### plot tsne of the single cell rna seq data (Fig. 3A) #########################################
-### load in the combined UMI counts from all cohorts
+### load in the combined UMI counts from all cohorts (we do not share the PDAC data, because part of the data has controlled access)
 load("pdac.RData")
 
 ### run tSNE
@@ -229,7 +229,7 @@ p <- ggplot(dat,aes(x = gene, y = gep, fill = lfc)) + geom_tile() + scale_fill_m
 
 
 
-######################## do the plots characterizing in detail each shared GEP identified by gbcd (Supplementary Fig. 6) ##########################
+######################## do the plots characterizing in detail each shared GEP identified by gbcd (Supplementary Fig. 11) ##########################
 ### specify the particular GEP to plot
 idx <- 14
 plot.idx <- k.idx1[idx]

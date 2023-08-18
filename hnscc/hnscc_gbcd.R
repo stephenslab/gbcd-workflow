@@ -9,7 +9,7 @@ library(gridExtra)
 library(Seurat)
 
 ### load in the HNSCC data, including the library size normalized and log-transformed scRNA-seq data and annotations for cells
-setwd("HNSCC")
+setwd("hnscc")
 load("hnscc.RData")
 
 ### run tSNE
@@ -40,8 +40,8 @@ source("../code/fit_cov_ebnmf.R")
 
 ### fit GBCD to estimate GEP memberships and signatures
 ### The runtime depends on the size of the dataset being analyzed, the number of maximum GEPs and the computing environment.
-### It takes about 3 hours to fit 24 GEPs for the HNSCC dataset.
-fit.gbcd <- fit.cov.ebnmf(Y = Y, Kmax = 24, prior = as.ebnm.fn(prior_family = "generalized_binary", scale = 0.04), extrapolate = FALSE)
+### It takes about 2 to 3 hours to fit 24 GEPs for the HNSCC dataset.
+fit.gbcd <- flash_fit_cov_ebnmf(Y = Y, Kmax = 24, prior = as.ebnm.fn(prior_family = "generalized_binary", scale = 0.04), extrapolate = FALSE)
 save(fit.gbcd, file = "hnscc_gbcd.RData")
 
 

@@ -82,7 +82,7 @@ pheatmap(fit.gbcd$L[loadings_order, k.idx], cluster_rows = FALSE, cluster_cols =
 
 
 
-############################# plot heatmap of of GEP memberships produced by alternative methods (Supplementary Fig. 4) #############################
+############################# plot heatmap of of GEP memberships produced by alternative methods (Supplementary Fig. 4-8) #############################
 ### combined nmf
 fit.nmf <- readRDS("other/combined_nmf.rds")
 W <- t(t(fit.nmf$W)/apply(fit.nmf$W, 2, max))
@@ -237,7 +237,7 @@ p <- ggplot(dat, aes(x = gene, y = gep, fill = lfc)) + geom_tile() + scale_fill_
 
 
 
-######################## do the plots characterizing in detail each shared GEP identified by gbcd (Supplementary Fig. 5) ##########################
+######################## do the plots characterizing in detail each shared GEP identified by gbcd (Supplementary Fig. 10) ##########################
 ### specify the particular GEP to plot
 idx <- 1
 plot.idx <- k.idx1[idx]
