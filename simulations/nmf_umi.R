@@ -1,7 +1,6 @@
 args = commandArgs(trailingOnly=TRUE)
 iter = as.integer(args[1])
 
-setwd("simulations")
 library(Matrix)
 library(fastTopics)
 
