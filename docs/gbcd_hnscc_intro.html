@@ -14,7 +14,7 @@
 
 <title>Dissecting tumor transcriptional heterogeneity from multi-tumor single-cell RNA-seq data using GBCD</title>
 
-<script src="site_libs/header-attrs-2.21/header-attrs.js"></script>
+<script src="site_libs/header-attrs-2.14/header-attrs.js"></script>
 <script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link href="site_libs/bootstrap-3.3.5/css/readable.min.css" rel="stylesheet" />
@@ -152,15 +152,11 @@ $(document).ready(function () {
     href = "index.html";
   var menuAnchor = $('a[href="' + href + '"]');
 
-  // mark the anchor link active (and if it's in a dropdown, also mark that active)
-  var dropdown = menuAnchor.closest('li.dropdown');
-  if (window.bootstrap) { // Bootstrap 4+
-    menuAnchor.addClass('active');
-    dropdown.find('> .dropdown-toggle').addClass('active');
-  } else { // Bootstrap 3
-    menuAnchor.parent().addClass('active');
-    dropdown.addClass('active');
-  }
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
 
   // Navbar adjustments
   var navHeight = $(".navbar").first().height() + 15;
@@ -189,8 +185,8 @@ $(document).ready(function () {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "\e259";
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -198,9 +194,16 @@ $(document).ready(function () {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "\e258";
-  font-family: 'Glyphicons Halflings';
+  content: "&#xe258;";
   border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -301,7 +304,7 @@ class="glyphicon glyphicon-ok text-success" aria-hidden="true"></span>
 <div class="tab-content">
 <div id="summary" class="tab-pane fade in active">
 <p>
-<strong>Last updated:</strong> 2023-08-08
+<strong>Last updated:</strong> 2023-08-18
 </p>
 <p>
 <strong>Checks:</strong> <span
@@ -319,7 +322,7 @@ title="This is the local directory in which the code in this file was executed."
 This reproducible <a href="https://rmarkdown.rstudio.com">R Markdown</a>
 analysis was created with <a
   href="https://github.com/workflowr/workflowr">workflowr</a> (version
-1.7.0.5). The <em>Checks</em> tab describes the reproducibility checks
+1.7.0). The <em>Checks</em> tab describes the reproducibility checks
 that were applied when the results were created. The <em>Past
 versions</em> tab lists the development history.
 </p>
@@ -432,15 +435,15 @@ project makes it easier to run your code on other machines.</p>
 <div class="panel panel-default">
 <div class="panel-heading">
 <p class="panel-title">
-<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreef2b1d24787754c18ab34093d806ddbcdfb7ac452targetblankf2b1d24a">
+<a data-toggle="collapse" data-parent="#workflowr-checks" href="#strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreea78ffef34f4f8acb4d78746d587e840e730b7cfdtargetblanka78ffefa">
 <span class="glyphicon glyphicon-ok text-success"
 aria-hidden="true"></span> <strong>Repository version:</strong>
-<a href="https://github.com/stephenslab/gbcd-workflow/tree/f2b1d24787754c18ab34093d806ddbcdfb7ac452" target="_blank">f2b1d24</a>
+<a href="https://github.com/stephenslab/gbcd-workflow/tree/a78ffef34f4f8acb4d78746d587e840e730b7cfd" target="_blank">a78ffef</a>
 </a>
 </p>
 </div>
 <div
-id="strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreef2b1d24787754c18ab34093d806ddbcdfb7ac452targetblankf2b1d24a"
+id="strongRepositoryversionstrongahrefhttpsgithubcomstephenslabgbcdworkflowtreea78ffef34f4f8acb4d78746d587e840e730b7cfdtargetblanka78ffefa"
 class="panel-collapse collapse">
 <div class="panel-body">
 <p>
@@ -450,7 +453,7 @@ reproducibility.
 </p>
 <p>
 The results in this page were generated with repository version
-<a href="https://github.com/stephenslab/gbcd-workflow/tree/f2b1d24787754c18ab34093d806ddbcdfb7ac452" target="_blank">f2b1d24</a>.
+<a href="https://github.com/stephenslab/gbcd-workflow/tree/a78ffef34f4f8acb4d78746d587e840e730b7cfd" target="_blank">a78ffef</a>.
 See the <em>Past versions</em> tab to see a history of the changes made
 to the R Markdown and HTML files.
 </p>
@@ -464,7 +467,9 @@ depends on. Below is the status of the Git repository when the results
 were generated:
 </p>
 <pre><code>
-working directory clean
+Untracked files:
+    Untracked:  .DS_Store
+
 </code></pre>
 <p>
 Note that any generated files, e.g. HTML, png, CSS, etc., are not
@@ -514,13 +519,47 @@ Message
 Rmd
 </td>
 <td>
+<a href="https://github.com/stephenslab/gbcd-workflow/blob/a78ffef34f4f8acb4d78746d587e840e730b7cfd/analysis/gbcd_hnscc_intro.Rmd" target="_blank">a78ffef</a>
+</td>
+<td>
+YushaLiu
+</td>
+<td>
+2023-08-18
+</td>
+<td>
+Add installation instructions
+</td>
+</tr>
+<tr>
+<td>
+html
+</td>
+<td>
+<a href="https://rawcdn.githack.com/stephenslab/gbcd-workflow/56bcb81d48f367747eadbe4bc5658312ba6568d0/docs/gbcd_hnscc_intro.html" target="_blank">56bcb81</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2023-08-09
+</td>
+<td>
+A few fixes to the gbcd_hnscc_intro analysis.
+</td>
+</tr>
+<tr>
+<td>
+Rmd
+</td>
+<td>
 <a href="https://github.com/stephenslab/gbcd-workflow/blob/f2b1d24787754c18ab34093d806ddbcdfb7ac452/analysis/gbcd_hnscc_intro.Rmd" target="_blank">f2b1d24</a>
 </td>
 <td>
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 <td>
 workflowr::wflow_publish("gbcd_hnscc_intro.Rmd", verbose = TRUE)
@@ -537,7 +576,7 @@ html
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 <td>
 Built the gbcd_hnscc_intro workflowr page.
@@ -554,7 +593,7 @@ Rmd
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 <td>
 workflowr::wflow_publish("gbcd_hnscc_intro.Rmd", verbose = TRUE)
@@ -725,7 +764,7 @@ Date
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 </tr>
 </tbody>
@@ -746,7 +785,7 @@ speaking, a larger <code>Kmax</code> allows for identifying finer
 structure in tumor transcriptional heterogeneity at the expense of
 higher computational cost. A good choice of <code>Kmax</code> depends on
 the complexity of the analyzed data (e.g., the number of patients and
-studies contained), and is often unknown in advance. You1 are encouraged
+studies contained), and is often unknown in advance. You are encouraged
 to explore and compare the results for different values of
 <code>Kmax</code>. After some initial exploration, we set
 <code>Kmax</code> to 24.</p>
@@ -857,7 +896,7 @@ Date
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 </tr>
 </tbody>
@@ -935,13 +974,24 @@ Date
 <tbody>
 <tr>
 <td>
+<a href="https://github.com/stephenslab/gbcd-workflow/blob/56bcb81d48f367747eadbe4bc5658312ba6568d0/docs/figure/gbcd_hnscc_intro.Rmd/plot-lfc-1.png" target="_blank">56bcb81</a>
+</td>
+<td>
+Peter Carbonetto
+</td>
+<td>
+2023-08-09
+</td>
+</tr>
+<tr>
+<td>
 <a href="https://github.com/stephenslab/gbcd-workflow/blob/d40f7d0624738c58682fd5be5d35b43b0e7af974/docs/figure/gbcd_hnscc_intro.Rmd/plot-lfc-1.png" target="_blank">d40f7d0</a>
 </td>
 <td>
 Peter Carbonetto
 </td>
 <td>
-2023-08-08
+2023-08-09
 </td>
 </tr>
 </tbody>
@@ -957,13 +1007,13 @@ rate (lfsr)</a>.</p>
 <p>This is the version of R and the packages that were used to generate
 these results.</p>
 <pre class="r"><code>sessionInfo()
-# R version 3.6.2 (2019-12-12)
-# Platform: x86_64-apple-darwin15.6.0 (64-bit)
-# Running under: macOS Catalina 10.15.7
+# R version 4.2.1 (2022-06-23)
+# Platform: aarch64-apple-darwin20 (64-bit)
+# Running under: macOS Monterey 12.4
 # 
 # Matrix products: default
-# BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
-# LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+# BLAS:   /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/lib/libRblas.0.dylib
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/lib/libRlapack.dylib
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -972,51 +1022,53 @@ these results.</p>
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-#  [1] ashr_2.2-57        flashier_0.2.51    magrittr_2.0.1     ebnm_1.0-54       
-#  [5] Matrix_1.3-4       Seurat_3.2.3       gridExtra_2.3      pheatmap_1.0.12   
-#  [9] ggrepel_0.9.1      RColorBrewer_1.1-2 cowplot_1.1.1      ggplot2_3.3.6     
+#  [1] ashr_2.2-54        flashier_0.2.51    magrittr_2.0.3     ebnm_1.0-46       
+#  [5] Matrix_1.4-1       sp_1.5-0           SeuratObject_4.1.0 Seurat_4.1.1      
+#  [9] gridExtra_2.3      pheatmap_1.0.12    ggrepel_0.9.1      RColorBrewer_1.1-3
+# [13] cowplot_1.1.1      ggplot2_3.4.2     
 # 
 # loaded via a namespace (and not attached):
-#   [1] Rtsne_0.15           colorspace_1.4-1     deldir_1.0-6        
-#   [4] ellipsis_0.3.2       ggridges_0.5.2       rprojroot_2.0.3     
-#   [7] fs_1.5.2             spatstat.data_3.0-1  farver_2.0.1        
-#  [10] leiden_0.3.3         listenv_0.8.0        fansi_0.4.0         
-#  [13] codetools_0.2-16     splines_3.6.2        knitr_1.37          
-#  [16] polyclip_1.10-0      jsonlite_1.7.2       workflowr_1.7.0.5   
-#  [19] ica_1.0-2            cluster_2.1.0        png_0.1-7           
-#  [22] uwot_0.1.10          shiny_1.7.4          sctransform_0.3.2   
-#  [25] compiler_3.6.2       httr_1.4.2           assertthat_0.2.1    
-#  [28] fastmap_1.1.0        lazyeval_0.2.2       cli_3.5.0           
-#  [31] later_1.0.0          htmltools_0.5.4      tools_3.6.2         
-#  [34] rsvd_1.0.2           igraph_1.2.5         gtable_0.3.0        
-#  [37] glue_1.4.2           RANN_2.6.1           reshape2_1.4.3      
-#  [40] dplyr_1.0.7          Rcpp_1.0.8           spatstat_1.64-1     
-#  [43] softImpute_1.4       scattermore_0.7      jquerylib_0.1.4     
-#  [46] vctrs_0.3.8          nlme_3.1-142         lmtest_0.9-38       
-#  [49] xfun_0.39.1          stringr_1.4.0        globals_0.13.0      
-#  [52] trust_0.1-8          mime_0.8             miniUI_0.1.1.1      
-#  [55] lifecycle_1.0.3      irlba_2.3.3          goftest_1.2-2       
-#  [58] future_1.18.0        MASS_7.3-51.4        zoo_1.8-7           
-#  [61] scales_1.1.0         promises_1.1.0       spatstat.utils_3.0-2
-#  [64] parallel_3.6.2       yaml_2.2.0           reticulate_1.16     
-#  [67] pbapply_1.5-1        sass_0.4.0           rpart_4.1-15        
-#  [70] SQUAREM_2017.10-1    stringi_1.4.3        highr_0.8           
-#  [73] deconvolveR_1.2-1    horseshoe_0.2.0      truncnorm_1.0-8     
-#  [76] rlang_1.0.6          pkgconfig_2.0.3      matrixStats_0.63.0  
-#  [79] invgamma_1.1         evaluate_0.14        lattice_0.20-38     
-#  [82] ROCR_1.0-11          purrr_0.3.4          tensor_1.5          
-#  [85] labeling_0.3         patchwork_1.0.1      htmlwidgets_1.6.1   
-#  [88] tidyselect_1.1.1     RcppAnnoy_0.0.18     plyr_1.8.5          
-#  [91] R6_2.4.1             generics_0.0.2       DBI_1.1.0           
-#  [94] mgcv_1.8-31          pillar_1.6.2         whisker_0.4         
-#  [97] withr_2.5.0          fitdistrplus_1.1-1   mixsqp_0.3-48       
-# [100] survival_3.1-8       abind_1.4-5          tibble_3.1.3        
-# [103] future.apply_1.6.0   crayon_1.4.1         KernSmooth_2.23-16  
-# [106] utf8_1.1.4           plotly_4.10.1        rmarkdown_2.21      
-# [109] grid_3.6.2           data.table_1.14.2    git2r_0.29.0        
-# [112] digest_0.6.23        xtable_1.8-4         tidyr_1.1.3         
-# [115] httpuv_1.5.2         munsell_0.5.0        viridisLite_0.3.0   
-# [118] bslib_0.3.1</code></pre>
+#   [1] workflowr_1.7.0       plyr_1.8.7            igraph_1.3.4         
+#   [4] lazyeval_0.2.2        splines_4.2.1         listenv_0.8.0        
+#   [7] scattermore_0.8       digest_0.6.29         invgamma_1.1         
+#  [10] htmltools_0.5.3       SQUAREM_2021.1        fansi_1.0.3          
+#  [13] tensor_1.5            cluster_2.1.3         ROCR_1.0-11          
+#  [16] globals_0.15.1        matrixStats_0.62.0    spatstat.sparse_2.1-1
+#  [19] colorspace_2.0-3      xfun_0.31             dplyr_1.1.2          
+#  [22] jsonlite_1.8.7        progressr_0.10.1      spatstat.data_2.2-0  
+#  [25] survival_3.5-5        zoo_1.8-10            glue_1.6.2           
+#  [28] polyclip_1.10-0       gtable_0.3.0          leiden_0.4.2         
+#  [31] future.apply_1.9.0    abind_1.4-5           scales_1.2.0         
+#  [34] DBI_1.1.3             spatstat.random_2.2-0 miniUI_0.1.1.1       
+#  [37] Rcpp_1.0.9            viridisLite_0.4.0     xtable_1.8-4         
+#  [40] reticulate_1.25       spatstat.core_2.4-4   truncnorm_1.0-8      
+#  [43] htmlwidgets_1.5.4     httr_1.4.6            ellipsis_0.3.2       
+#  [46] ica_1.0-3             pkgconfig_2.0.3       farver_2.1.1         
+#  [49] sass_0.4.2            uwot_0.1.11           deldir_1.0-6         
+#  [52] utf8_1.2.2            tidyselect_1.2.0      labeling_0.4.2       
+#  [55] rlang_1.1.1           softImpute_1.4-1      reshape2_1.4.4       
+#  [58] later_1.3.0           munsell_0.5.0         tools_4.2.1          
+#  [61] cachem_1.0.6          cli_3.6.1             generics_0.1.3       
+#  [64] ggridges_0.5.3        evaluate_0.15         stringr_1.5.0        
+#  [67] fastmap_1.1.0         yaml_2.3.5            goftest_1.2-3        
+#  [70] knitr_1.39            fs_1.5.2              fitdistrplus_1.1-8   
+#  [73] purrr_1.0.1           RANN_2.6.1            pbapply_1.5-0        
+#  [76] future_1.27.0         nlme_3.1-157          whisker_0.4          
+#  [79] mime_0.12             compiler_4.2.1        rstudioapi_0.14      
+#  [82] plotly_4.10.0         png_0.1-7             spatstat.utils_2.3-1 
+#  [85] tibble_3.2.1          bslib_0.4.0           deconvolveR_1.2-1    
+#  [88] stringi_1.7.8         highr_0.9             rgeos_0.5-9          
+#  [91] lattice_0.20-45       vctrs_0.6.3           pillar_1.9.0         
+#  [94] lifecycle_1.0.3       trust_0.1-8           spatstat.geom_2.4-0  
+#  [97] lmtest_0.9-40         jquerylib_0.1.4       RcppAnnoy_0.0.19     
+# [100] data.table_1.14.2     irlba_2.3.5           httpuv_1.6.5         
+# [103] patchwork_1.1.2       R6_2.5.1              horseshoe_0.2.0      
+# [106] promises_1.2.0.1      KernSmooth_2.23-20    parallelly_1.32.1    
+# [109] codetools_0.2-18      MASS_7.3-57           rprojroot_2.0.3      
+# [112] withr_2.5.0           sctransform_0.3.3     mgcv_1.8-40          
+# [115] parallel_4.2.1        grid_4.2.1            rpart_4.1.16         
+# [118] tidyr_1.3.0           rmarkdown_2.14        Rtsne_0.16           
+# [121] git2r_0.31.0          mixsqp_0.3-43         shiny_1.7.2</code></pre>
 <br>
 <p>
 <button type="button" class="btn btn-default btn-workflowr btn-workflowr-sessioninfo" data-toggle="collapse" data-target="#workflowr-sessioninfo" style="display: block;">
@@ -1026,13 +1078,13 @@ Session information
 </p>
 <div id="workflowr-sessioninfo" class="collapse">
 <pre class="r"><code>sessionInfo()
-# R version 3.6.2 (2019-12-12)
-# Platform: x86_64-apple-darwin15.6.0 (64-bit)
-# Running under: macOS Catalina 10.15.7
+# R version 4.2.1 (2022-06-23)
+# Platform: aarch64-apple-darwin20 (64-bit)
+# Running under: macOS Monterey 12.4
 # 
 # Matrix products: default
-# BLAS:   /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRblas.0.dylib
-# LAPACK: /Library/Frameworks/R.framework/Versions/3.6/Resources/lib/libRlapack.dylib
+# BLAS:   /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/lib/libRblas.0.dylib
+# LAPACK: /Library/Frameworks/R.framework/Versions/4.2-arm64/Resources/lib/libRlapack.dylib
 # 
 # locale:
 # [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1041,51 +1093,53 @@ Session information
 # [1] stats     graphics  grDevices utils     datasets  methods   base     
 # 
 # other attached packages:
-#  [1] ashr_2.2-57        flashier_0.2.51    magrittr_2.0.1     ebnm_1.0-54       
-#  [5] Matrix_1.3-4       Seurat_3.2.3       gridExtra_2.3      pheatmap_1.0.12   
-#  [9] ggrepel_0.9.1      RColorBrewer_1.1-2 cowplot_1.1.1      ggplot2_3.3.6     
+#  [1] ashr_2.2-54        flashier_0.2.51    magrittr_2.0.3     ebnm_1.0-46       
+#  [5] Matrix_1.4-1       sp_1.5-0           SeuratObject_4.1.0 Seurat_4.1.1      
+#  [9] gridExtra_2.3      pheatmap_1.0.12    ggrepel_0.9.1      RColorBrewer_1.1-3
+# [13] cowplot_1.1.1      ggplot2_3.4.2     
 # 
 # loaded via a namespace (and not attached):
-#   [1] Rtsne_0.15           colorspace_1.4-1     deldir_1.0-6        
-#   [4] ellipsis_0.3.2       ggridges_0.5.2       rprojroot_2.0.3     
-#   [7] fs_1.5.2             spatstat.data_3.0-1  farver_2.0.1        
-#  [10] leiden_0.3.3         listenv_0.8.0        fansi_0.4.0         
-#  [13] codetools_0.2-16     splines_3.6.2        knitr_1.37          
-#  [16] polyclip_1.10-0      jsonlite_1.7.2       workflowr_1.7.0.5   
-#  [19] ica_1.0-2            cluster_2.1.0        png_0.1-7           
-#  [22] uwot_0.1.10          shiny_1.7.4          sctransform_0.3.2   
-#  [25] compiler_3.6.2       httr_1.4.2           assertthat_0.2.1    
-#  [28] fastmap_1.1.0        lazyeval_0.2.2       cli_3.5.0           
-#  [31] later_1.0.0          htmltools_0.5.4      tools_3.6.2         
-#  [34] rsvd_1.0.2           igraph_1.2.5         gtable_0.3.0        
-#  [37] glue_1.4.2           RANN_2.6.1           reshape2_1.4.3      
-#  [40] dplyr_1.0.7          Rcpp_1.0.8           spatstat_1.64-1     
-#  [43] softImpute_1.4       scattermore_0.7      jquerylib_0.1.4     
-#  [46] vctrs_0.3.8          nlme_3.1-142         lmtest_0.9-38       
-#  [49] xfun_0.39.1          stringr_1.4.0        globals_0.13.0      
-#  [52] trust_0.1-8          mime_0.8             miniUI_0.1.1.1      
-#  [55] lifecycle_1.0.3      irlba_2.3.3          goftest_1.2-2       
-#  [58] future_1.18.0        MASS_7.3-51.4        zoo_1.8-7           
-#  [61] scales_1.1.0         promises_1.1.0       spatstat.utils_3.0-2
-#  [64] parallel_3.6.2       yaml_2.2.0           reticulate_1.16     
-#  [67] pbapply_1.5-1        sass_0.4.0           rpart_4.1-15        
-#  [70] SQUAREM_2017.10-1    stringi_1.4.3        highr_0.8           
-#  [73] deconvolveR_1.2-1    horseshoe_0.2.0      truncnorm_1.0-8     
-#  [76] rlang_1.0.6          pkgconfig_2.0.3      matrixStats_0.63.0  
-#  [79] invgamma_1.1         evaluate_0.14        lattice_0.20-38     
-#  [82] ROCR_1.0-11          purrr_0.3.4          tensor_1.5          
-#  [85] labeling_0.3         patchwork_1.0.1      htmlwidgets_1.6.1   
-#  [88] tidyselect_1.1.1     RcppAnnoy_0.0.18     plyr_1.8.5          
-#  [91] R6_2.4.1             generics_0.0.2       DBI_1.1.0           
-#  [94] mgcv_1.8-31          pillar_1.6.2         whisker_0.4         
-#  [97] withr_2.5.0          fitdistrplus_1.1-1   mixsqp_0.3-48       
-# [100] survival_3.1-8       abind_1.4-5          tibble_3.1.3        
-# [103] future.apply_1.6.0   crayon_1.4.1         KernSmooth_2.23-16  
-# [106] utf8_1.1.4           plotly_4.10.1        rmarkdown_2.21      
-# [109] grid_3.6.2           data.table_1.14.2    git2r_0.29.0        
-# [112] digest_0.6.23        xtable_1.8-4         tidyr_1.1.3         
-# [115] httpuv_1.5.2         munsell_0.5.0        viridisLite_0.3.0   
-# [118] bslib_0.3.1</code></pre>
+#   [1] workflowr_1.7.0       plyr_1.8.7            igraph_1.3.4         
+#   [4] lazyeval_0.2.2        splines_4.2.1         listenv_0.8.0        
+#   [7] scattermore_0.8       digest_0.6.29         invgamma_1.1         
+#  [10] htmltools_0.5.3       SQUAREM_2021.1        fansi_1.0.3          
+#  [13] tensor_1.5            cluster_2.1.3         ROCR_1.0-11          
+#  [16] globals_0.15.1        matrixStats_0.62.0    spatstat.sparse_2.1-1
+#  [19] colorspace_2.0-3      xfun_0.31             dplyr_1.1.2          
+#  [22] jsonlite_1.8.7        progressr_0.10.1      spatstat.data_2.2-0  
+#  [25] survival_3.5-5        zoo_1.8-10            glue_1.6.2           
+#  [28] polyclip_1.10-0       gtable_0.3.0          leiden_0.4.2         
+#  [31] future.apply_1.9.0    abind_1.4-5           scales_1.2.0         
+#  [34] DBI_1.1.3             spatstat.random_2.2-0 miniUI_0.1.1.1       
+#  [37] Rcpp_1.0.9            viridisLite_0.4.0     xtable_1.8-4         
+#  [40] reticulate_1.25       spatstat.core_2.4-4   truncnorm_1.0-8      
+#  [43] htmlwidgets_1.5.4     httr_1.4.6            ellipsis_0.3.2       
+#  [46] ica_1.0-3             pkgconfig_2.0.3       farver_2.1.1         
+#  [49] sass_0.4.2            uwot_0.1.11           deldir_1.0-6         
+#  [52] utf8_1.2.2            tidyselect_1.2.0      labeling_0.4.2       
+#  [55] rlang_1.1.1           softImpute_1.4-1      reshape2_1.4.4       
+#  [58] later_1.3.0           munsell_0.5.0         tools_4.2.1          
+#  [61] cachem_1.0.6          cli_3.6.1             generics_0.1.3       
+#  [64] ggridges_0.5.3        evaluate_0.15         stringr_1.5.0        
+#  [67] fastmap_1.1.0         yaml_2.3.5            goftest_1.2-3        
+#  [70] knitr_1.39            fs_1.5.2              fitdistrplus_1.1-8   
+#  [73] purrr_1.0.1           RANN_2.6.1            pbapply_1.5-0        
+#  [76] future_1.27.0         nlme_3.1-157          whisker_0.4          
+#  [79] mime_0.12             compiler_4.2.1        rstudioapi_0.14      
+#  [82] plotly_4.10.0         png_0.1-7             spatstat.utils_2.3-1 
+#  [85] tibble_3.2.1          bslib_0.4.0           deconvolveR_1.2-1    
+#  [88] stringi_1.7.8         highr_0.9             rgeos_0.5-9          
+#  [91] lattice_0.20-45       vctrs_0.6.3           pillar_1.9.0         
+#  [94] lifecycle_1.0.3       trust_0.1-8           spatstat.geom_2.4-0  
+#  [97] lmtest_0.9-40         jquerylib_0.1.4       RcppAnnoy_0.0.19     
+# [100] data.table_1.14.2     irlba_2.3.5           httpuv_1.6.5         
+# [103] patchwork_1.1.2       R6_2.5.1              horseshoe_0.2.0      
+# [106] promises_1.2.0.1      KernSmooth_2.23-20    parallelly_1.32.1    
+# [109] codetools_0.2-18      MASS_7.3-57           rprojroot_2.0.3      
+# [112] withr_2.5.0           sctransform_0.3.3     mgcv_1.8-40          
+# [115] parallel_4.2.1        grid_4.2.1            rpart_4.1.16         
+# [118] tidyr_1.3.0           rmarkdown_2.14        Rtsne_0.16           
+# [121] git2r_0.31.0          mixsqp_0.3-43         shiny_1.7.2</code></pre>
 </div>
 </div>
 
