@@ -91,20 +91,24 @@ pheatmap(fit.gbcd$L[loadings_order, k.idx], cluster_rows = FALSE, cluster_cols =
          labels_col = 1:length(k.idx), angle_col = 0, fontsize = 7.5, fontsize_col = 11, 
          gaps_row = cumsum(table(anno$cohort))[-3], gaps_col = c(14, 16), main = "")
 
+
 ### save the top driving gene lists for shared GEPs
-genes <- matrix(NA, nrow=200, ncol=2*length(k.idx1))
-colnames(genes) <- paste0("col", 1:ncol(genes))
-colnames(genes)[seq(1,ncol(genes), 2)] <- paste0("GEP", 1:length(k.idx1))
-colnames(genes)[seq(2,ncol(genes), 2)] <- rep("LFC", length(k.idx1))
+dat.list <- list(NULL)
+
 for(k in 1:length(k.idx1)){
   cur.genes <- rownames(fit.gbcd$F$lfc)[fit.gbcd$F$lfc[, k.idx1[k]] > pmax(quantile(fit.gbcd$F$lfc[, k.idx1[k]], 0.9856), 0.5)]
   F.tmp <- fit.gbcd$F$lfc[cur.genes,]
   cur.genes <- rownames(F.tmp)[order(F.tmp[, k.idx1[k]], decreasing = TRUE)]
-  genes[1:length(cur.genes), 2*k-1] <- cur.genes
-  genes[1:length(cur.genes), 2*k] <- round(fit.gbcd$F$lfc[cur.genes, k.idx1[k]], 3)
+  lfc <- round(fit.gbcd$F$lfc[cur.genes, k.idx1[k]], 3)
+  lfsr <- fit.gbcd$F$lfsr[cur.genes, k.idx1[k]]
+  zscore <- round(fit.gbcd$F$z_score[cur.genes, k.idx1[k]], 3)
+  dat <- data.frame(gene=cur.genes, lfc=lfc, lfsr=lfsr, zscore=zscore)
+  rownames(dat) <- 1:nrow(dat)
+  dat.list[[k]] <- dat
 }
-genes <- as.data.frame(genes)
-write.xlsx(genes, "GEP_driving_genes.xlsx")
+
+names(dat.list) <- paste0("GEP", 1:length(k.idx1))
+write.xlsx(dat.list, "GEP_driving_genes.xlsx")
 
 
 
@@ -255,8 +259,7 @@ p1 <- pheatmap(fit.gbcd$L[loadings_order, plot.idx], cluster_rows = FALSE, clust
                labels_col = "", fontsize = 9, gaps_row = cumsum(table(anno$cohort))[-3], main = "")
 
 ### display the gene set enrichment analysis result for the GEP signature
-dat <- readRDS(paste0("gsea/factor", plot.idx, ".rds"))
-dat.k <- dat[dat$logOddsRatio > 1 & dat$nlog10pFishersExact > 5, ]
+dat.k <- readRDS(paste0("gsea/GEP", idx, ".rds"))
 dat.k <- dat.k[1:pmin(nrow(dat.k), 5),]
 dat.k$cluster <- paste0("GEP", idx)
 dat.k$nlog10p <- pmin(dat.k$nlog10pFishersExact, 15)
