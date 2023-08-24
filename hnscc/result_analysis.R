@@ -100,13 +100,14 @@ pheatmap(fit.gbcd$L[loadings_order, k.idx], cluster_rows = FALSE, cluster_cols =
 dat.list <- list(NULL)
 
 for(k in 1:length(k.idx1)){
-  cur.genes <- rownames(fit.gbcd$F$lfc)[fit.gbcd$F$lfc[, k.idx1[k]] > pmax(quantile(fit.gbcd$F$lfc[, k.idx1[k]], 0.9856), 0.5)]
+  cur.genes <- rownames(fit.gbcd$F$lfc)[fit.gbcd$F$lfc[, k.idx1[k]] > pmax(quantile(fit.gbcd$F$lfc[, k.idx1[k]], 1-200/nrow(fit.gbcd$F$lfc)), log2(1.5))]
   F.tmp <- fit.gbcd$F$lfc[cur.genes,]
   cur.genes <- rownames(F.tmp)[order(F.tmp[, k.idx1[k]], decreasing = TRUE)]
   lfc <- round(fit.gbcd$F$lfc[cur.genes, k.idx1[k]], 3)
   lfsr <- fit.gbcd$F$lfsr[cur.genes, k.idx1[k]]
   zscore <- round(fit.gbcd$F$z_score[cur.genes, k.idx1[k]], 3)
   dat <- data.frame(gene=cur.genes, lfc=lfc, lfsr=lfsr, zscore=zscore)
+  dat <- dat[dat$lfsr < 1e-3, ]
   rownames(dat) <- 1:nrow(dat)
   dat.list[[k]] <- dat
 }
