@@ -122,19 +122,20 @@ init_cov_ebnmf <- function(fl, kset = 1:ncol(fl$flash_fit$EF[[1]])) {
 
 ### fit EBMF to covariance matrix YY' s.t. E[YY'] = LL'+ D, where D = s2*I and I is an identity matrix
 fit_ebmf_to_YY <- function(dat, fl, extrapolate = TRUE, maxiter = 500, epsilon = 1e-3){
-  s2 <- max(0, mean(rowSums(dat$U * dat$V) - rowSums(fl$L_pm * fl$F_pm)))
+  data_diag <- rowSums(dat$U * dat$D * dat$V)
+  s2 <- max(0, mean(data_diag - rowSums(fl$L_pm * fl$F_pm)))
   s2_diff <- Inf
 
   ### alternate between estimating s2 and backfitting until convergence
   while(s2 > 0 && abs(s2_diff - 1) > epsilon) {
-    dat_minuss2 <- list(U = dat$U, V = dat$V,
+    dat_minuss2 <- list(U = dat$U, D = dat$D, V = dat$V,
                         S = Matrix::Diagonal(nrow(dat$U), -s2))
     fl <- fl %>%
       flash_update_data(dat_minuss2) %>%
       flash_backfit(extrapolate = extrapolate, maxiter = maxiter)
 
     old_s2 <- s2
-    s2 <- max(0, mean(rowSums(dat$U * dat$V) - rowSums(fl$L_pm * fl$F_pm)))
+    s2 <- max(0, mean(data_diag - rowSums(fl$L_pm * fl$F_pm)))
     s2_diff <- s2 / old_s2
   }
 
