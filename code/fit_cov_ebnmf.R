@@ -11,7 +11,13 @@ flash_fit_cov_ebnmf <-
             extrapolate = TRUE, maxiter = 500, verbose = 1) {
 
   ### use the covariance matrix from the cell by gene matrix of gene expression data
-  dat <- list(U = Y, D = rep(1 / ncol(Y), ncol(Y)), V = Y)
+  if (2 * ncol(Y) * mean(Y > 0) < nrow(Y)) {
+    # Use lowrank plus sparse representation:
+    dat <- list(U = Y, D = rep(1 / ncol(Y), ncol(Y)), V = Y)
+  } else {
+    # Form covariance matrix:
+    dat <- Matrix::tcrossprod(Y) / ncol(Y)
+  }
 
   ### fit EBMF with point laplace prior to covariance matrix without considering the diagonal component
   fit.cov <- flash_init(dat, var_type = 0) %>%
@@ -122,7 +128,12 @@ init_cov_ebnmf <- function(fl, kset = 1:ncol(fl$flash_fit$EF[[1]])) {
 
 ### fit EBMF to covariance matrix YY' s.t. E[YY'] = LL'+ D, where D = s2*I and I is an identity matrix
 fit_ebmf_to_YY <- function(dat, fl, extrapolate = TRUE, maxiter = 500, epsilon = 1e-3){
-  data_diag <- rowSums(dat$U * dat$D * dat$V)
+  if (is.matrix(dat) || inherits(dat, "Matrix")) {
+    data_diag <- diag(dat)
+  } else {
+    data_diag <- Matrix::rowSums(dat$U * dat$D * dat$V)
+  }
+
   s2 <- max(0, mean(data_diag - rowSums(fl$L_pm * fl$F_pm)))
   s2_diff <- Inf
 
