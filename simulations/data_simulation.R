@@ -79,6 +79,7 @@ for(iter in 1:20){
   
   ### save the simulated data
   data <- list(X = t(X.thin), Y = norm.dat, L = L, F = F)
-  saveRDS(data, file=paste0("data/iter", iter, ".rds"))
+  saveRDS(data, file = paste0("data/iter", iter, ".rds"))
+  write.table(t(X.thin), file = paste0("data/iter", iter, ".txt"), quote = FALSE, sep = "\t")
   rm(data, X, X.mod, L, F)
 }

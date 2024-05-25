@@ -55,6 +55,7 @@ source("../code/fit_cov_ebnmf.R")
 ### fit GBCD to estimate GEP memberships and signatures
 ### The runtime depends on the size of the dataset being analyzed, the number of maximum GEPs and the computing environment.
 ### It takes about 50 hours to fit 32 GEPs for the combined PDAC data containing 35,670 cells.
+### Note that the "gbcd" package implements a faster version which takes about 21 hours.
 fit.gbcd <- flash_fit_cov_ebnmf(Y = scdata.combined.logpc, Kmax = 32, prior = as.ebnm.fn(prior_family = "generalized_binary", scale = 0.02), 
                                 maxiter = 300, extrapolate = FALSE)
 
@@ -70,8 +71,9 @@ brks <- seq(0, 1, 0.02)
 
 ### specify the indices of shared and cohort/patient-specific GEPs respectively
 k.idx1 <- c(3, 30, 7, 4, 23, 12, 5, 21, 54, 15, 16, 11, 19, 28)
-k.idx2 <- c(2, 6, 63, 40, 18, 24, 56, 51, 32, 27, 60, 33, 61, 25, 57, 62, 37, 29, 58, 20)
-k.idx <- c(k.idx1, k.idx2)
+k.idx2 <- c(2, 56, 27, 57, 62, 58)
+k.idx3 <- c(63, 40, 18, 24, 51, 32, 60, 33, 61, 25, 37, 29, 20)
+k.idx <- c(k.idx1, k.idx2, k.idx3)
 
 ### determine the order of cells within each tumor by computing a 1-d embedding of GEP memberships
 fit.plot <- list(L=fit.gbcd$L[, k.idx], F=fit.gbcd$L[, k.idx])
@@ -89,7 +91,7 @@ for (group in levels(anno$subject)) {
 pheatmap(fit.gbcd$L[loadings_order, k.idx], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE,
          annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, color = cols, breaks = brks,
          labels_col = 1:length(k.idx), angle_col = 0, fontsize = 7.5, fontsize_col = 11, 
-         gaps_row = cumsum(table(anno$cohort))[-3], gaps_col = c(14, 16), main = "")
+         gaps_row = cumsum(table(anno$cohort))[-3], gaps_col = c(length(k.idx1), length(k.idx1)+length(k.idx2)), main = "")
 
 
 ### save the top driving gene lists for shared GEPs
@@ -110,6 +112,73 @@ for(k in 1:length(k.idx1)){
 
 names(dat.list) <- paste0("GEP", 1:length(k.idx1))
 write.xlsx(dat.list, "GEP_driving_genes.xlsx")
+
+
+
+################## determine if the GEP gene signatures show spatial structure by chromosome coordinates (Supplementary Fig. 13) #####################
+library(mgcv)
+
+### read in the gene annotation file 
+anno_loc <- read.table("gencode_v19_gene_pos.txt")
+
+### consider only the genes which are available in the gbcd fit
+anno_loc <- anno_loc[anno_loc$V1 %in% rownames(fit.gbcd$F$lfc), ]
+
+### iterate over all GEPs and all chromosomes
+dev.expl.denom <- rep(0, length(k.idx))
+dev.expl.numer <- rep(0, length(k.idx))
+dev.expl <- matrix(NA, nrow=length(k.idx), ncol=22)
+rownames(dev.expl) <- paste0("GEP", 1:length(k.idx))
+colnames(dev.expl) <- paste0("chr", 1:22)
+
+for(k in 1:length(k.idx)){
+  for(i in 1:22){
+    data.chr <- anno_loc[anno_loc$V2==paste0("chr", i), ]
+    data.chr <- data.chr[order(data.chr$V3), ]
+    data.chr$f <- fit.gbcd$F$lfc[data.chr$V1, k.idx[k]]
+    data.chr$loc <- (data.chr$V3+data.chr$V4)/2
+    fit.chr <- gam(f~s(loc), data=data.chr)
+    dev.expl[k,i] <- summary(fit.chr)$dev.expl
+    dev.expl.numer[k] <- dev.expl.numer[k] + fit.chr$deviance
+    dev.expl.denom[k] <- dev.expl.denom[k] + fit.chr$null.deviance
+  }
+}
+
+### calculate the proportion of deviance explained across all chromosomes
+dev.expl.all <- (dev.expl.denom - dev.expl.numer)/dev.expl.denom
+names(dev.expl.all) <- paste0("GEP", 1:length(k.idx))
+
+### plot the proportion of deviance explained across all chromosomes
+classes <- c(rep("shared grp1", length(k.idx1)), rep("shared grp2", length(k.idx2)-1), rep("patient-specific", length(k.idx3)))
+classes <- factor(classes, levels=c("shared grp1", "shared grp2", "patient-specific"))
+plt.dat <- data.frame(pve=dev.expl.all[-15], category=classes)
+plt <- ggplot(plt.dat, aes(x=category, y=pve, fill=category)) + geom_boxplot(width = 0.25, size = 0.4, outlier.shape = NA) +
+  scale_fill_manual(values = brewer.pal(n=12, name="Paired")[1:3]) + labs(x = "", y = TeX(r"($\rho_k$)"), title = "") + 
+  theme(plot.title = element_text(hjust = 0.5), text = element_text(size = 20), legend.position="none")
+
+
+
+############################ plot heatmap of of GEP memberships produced by alternative methods (Supplementary Fig. 14-15) ############################
+### pca
+fit.pca <- readRDS("other/pca.rds")
+L.pca <- fit.pca$u
+L.pca <- t(t(L.pca)/apply(L.pca, 2, function(x){x[which.max(abs(x))]}))
+rownames(L.pca) <- rownames(anno)
+colnames(L.pca) <- paste0("k", 1:ncol(L.pca))
+pheatmap(L.pca[loadings_order, ], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE,
+         annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, 
+         color = colorRampPalette(c("blue", "gray96", "red"))(99), breaks = seq(-1, 1, length = 100),
+         labels_col = 1:ncol(L.pca), angle_col = 0, fontsize = 6, fontsize_col = 11, gaps_row = cumsum(table(anno$cohort))[-3], main = "")
+
+### consensus NMF
+cnmf <- read.table("other/result.usages.k_45.dt_0_14.consensus.txt")
+cnmf <- cnmf/rowSums(cnmf)
+cnmf <- t(t(cnmf)/apply(cnmf, 2, max))
+rownames(cnmf) <- rownames(anno)
+colnames(cnmf) <- paste0("k", 1:ncol(cnmf))
+pheatmap(cnmf[loadings_order, ], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE, 
+         annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, color = cols, breaks = brks,
+         labels_col = 1:ncol(cnmf), angle_col = 0, fontsize = 6, fontsize_col = 11, gaps_row = cumsum(table(anno$cohort))[-3], main = "")
 
 
 
@@ -249,7 +318,7 @@ p <- ggplot(dat,aes(x = gene, y = gep, fill = lfc)) + geom_tile() + scale_fill_m
 
 
 
-######################## do the plots characterizing in detail each shared GEP identified by gbcd (Supplementary Fig. 11) ##########################
+######################## do the plots characterizing in detail each shared GEP identified by gbcd (Supplementary Fig. 19) ##########################
 ### specify the particular GEP to plot
 idx <- 14
 plot.idx <- k.idx1[idx]

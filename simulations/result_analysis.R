@@ -56,7 +56,7 @@ p3.tsne <- DimPlot(pdac, label = TRUE, reduction = "tsne", group.by = "patient",
 
 
 
-################## plot the GEP membership estimates of all methods for this replicate dataset (Fig. 1A, Supplementary Fig. 1 and 2) ###################
+################## plot the GEP membership estimates of all methods for this replicate dataset (Supplementary Fig. 1 and 2) ###################
 ### define the color map for GEP memberships
 cols <- colorRampPalette(c("gray96", "red"))(99)
 brks <- seq(0, 1, length=100)
@@ -144,12 +144,16 @@ L10 <- fit.cd$L
 fit.gbcd <- readRDS(paste0("output/iter", iter, "_gbcd.rds"))
 L11 <- fit.gbcd$L
 
+### load in the PCA fit to log-pc counts 
+fit.pca <- readRDS(paste0("output/iter", iter, "_pca_K12.rds"))
+L12 <- fit.pca$u
+
 ### plot GEP membership estimates for all methods, but remove the programs that are highly correlated with cellular detection rates
 loadings <- list(L1, L2, L4, L5, L6, L7, L8, L9, L10, L11)
 plist <- list(NULL)
 cdr <- rowMeans(X!=0)
-methods <- c("NMF, combined (UMI counts)", "NMF, combined (log-pc counts)", "LIGER (lambda=5)", "CCA (Seurat)", "MNN Correct", "Conos",
-             "EB-SNMF, point-exp prior", "EB-SNMF, GB prior", "CD, point-exp prior", "GBCD", "Patient-by-patient NMF")
+methods <- c("NMF, combined (UMI counts)", "NMF, combined (log-pc counts)", "LIGER", "CCA (Seurat)", "MNN Correct", "Conos",
+             "EB-SNMF, point-exp prior", "EB-SNMF, GB prior", "CD, point-exp prior", "GBCD", "Patient-by-patient NMF", "PCA")
 
 for(i in 1:10){
   L.tmp <- matrix(0, nrow=nrow(L.order), ncol=0)
@@ -183,7 +187,8 @@ plot_grid(p.truth$gtable, plist[[1]]$gtable, plist[[2]]$gtable, plist[[3]]$gtabl
 cont <- data.frame(truth=L.order[, 1], m1=L1[, which.max(cor(L1, L.order[, 1]))], m2=L2[, which.max(cor(L2, L.order[, 1]))], m3=L3[, 1],
                    m4=L4[, which.max(cor(L4, L.order[, 1]))], m5=L5[, which.max(cor(L5, L.order[, 1]))], m6=L6[, which.max(cor(L6, L.order[, 1]))], 
                    m7=L7[, which.max(cor(L7, L.order[, 1]))], m8=L8[, which.max(cor(L8, L.order[, 1]))], m9=L9[, which.max(cor(L9, L.order[, 1]))], 
-                   m10=L10[, which.max(cor(L10, L.order[, 1]))], m11=L11[, which.max(cor(L11, L.order[, 1]))])
+                   m10=L10[, which.max(cor(L10, L.order[, 1]))], m11=L11[, which.max(cor(L11, L.order[, 1]))], 
+                   m12 = L12[, which.max(cor(L12, L.order[, 1]))])
 cont <- t(t(cont)/apply(cont, 2, max))
 cont <- as.data.frame(cont)
 
@@ -231,17 +236,23 @@ p11 <- ggplot(cont, aes(x = truth, y = m11)) + geom_point(size = 1) +
   labs(x = "True GEP membership", y = "Estimated GEP membership") + xlim(0, 1) + ylim(0, 1) +
   theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12)) +   
   annotate(geom="text", x=0.2, y=0.9, label=paste0("R=", round(cor(cont$truth, cont$m11), 2)), size=6) + ggtitle(methods[10]) 
+p12 <- ggplot(cont, aes(x = truth, y = m12)) + geom_point(size = 1) + 
+  labs(x = "True GEP membership", y = "Estimated GEP membership") + xlim(0, 1) + ylim(0, 1) +
+  theme(axis.text = element_text(size = 12), axis.title = element_text(size = 12)) +   
+  annotate(geom="text", x=0.2, y=0.9, label=paste0("R=", round(cor(cont$truth, cont$m12), 2)), size=6) + ggtitle(methods[12]) 
 
 ### plot all panels together
-plot_grid(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, ncol = 3) 
+plot_grid(p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, p11, p12, ncol = 3) 
 
 
 
 ##################################### summarize performance of all methods across 20 replicates (Fig. 1C) ###################################
+cnmf.files <- list.files("output/")
+
 ### summarize the results
-res1 <- matrix(0, nrow=40, ncol=11)
-res2 <- matrix(0, nrow=20, ncol=11)
-res3 <- matrix(0, nrow=160, ncol=11)
+res1 <- matrix(0, nrow=40, ncol=13)
+res2 <- matrix(0, nrow=20, ncol=13)
+res3 <- matrix(0, nrow=160, ncol=13)
 idx1 <- 0
 idx2 <- 0
 idx3 <- 0
@@ -258,59 +269,71 @@ for(iter in 1:20){
   fit.tm <- readRDS(paste0("output/iter", iter, "_topic_model.rds"))
   L1 <- fit.tm$L
   
+  ### load in the consensus NMF fit to UMI counts
+  filename <- grep(paste0("iter", iter, ".usages"), cnmf.files)
+  L2 <- read.table(paste0("output/", cnmf.files[filename]))
+  L2 <- L2/rowSums(L2)
+  colnames(L2) <- paste0("k", 1:ncol(L2))
+  
   ### load in the NMF fit to log-pc counts
   fit.nmf <- readRDS(paste0("output/iter", iter, "_nmf.rds"))
-  L2 <- fit.nmf$W
+  L3 <- fit.nmf$W
   
   ### load in the patient-by-patient NMF fit to log-pc counts
   fit.nmf <- readRDS(paste0("output/iter", iter, "_nmf_by_patient_summary.rds"))
-  L3 <- data.frame(k1=fit.nmf$k1)
+  L4 <- data.frame(k1=fit.nmf$k1)
   
   ### load in the LIGER fit
-  L4 <- readRDS(paste0("output/iter", iter, "_liger.rds"))
+  L5 <- readRDS(paste0("output/iter", iter, "_liger.rds"))
   
   
   ############################################### NMF methods applied to to batch corrected data #################################################
   ### load in the CCA fit implemented using Seurat v3
   fit.seurat <- readRDS(paste0("output/iter", iter, "_seurat.rds"))
-  L5 <- fit.seurat$W
+  L6 <- fit.seurat$W
   
   ### load in the MNN correct fit
   fit.mnn <- readRDS(paste0("output/iter", iter, "_mnn_correct.rds"))
-  L6 <- fit.mnn$W
+  L7 <- fit.mnn$W
   
   ### load in the Conos fit
   fit.conos <- readRDS(paste0("output/iter", iter, "_conos.rds"))
-  L7 <- fit.conos$W
+  L8 <- fit.conos$W
   
   
   ############################################ EBMF methods applied to log-pc counts ###################################################
   ### load in the EB-SNMF fit to log-pc counts with point exponential prior on L
   fit.snmf <- readRDS(paste0("output/iter", iter, "_point_exponential_snmf.rds"))
-  L8 <- fit.snmf$L_pm
+  L9 <- fit.snmf$L_pm
   
   ### load in the EB-SNMF fit to log-pc counts with generalized binary prior on L
   fit.snmf <- readRDS(paste0("output/iter", iter, "_gb_snmf.rds"))
-  L9 <- fit.snmf$L_pm
+  L10 <- fit.snmf$L_pm
   
   ### load in the EBMF fit to log-pc counts based on covariance decomposition, with point exponential prior on L
   fit.cd <- readRDS(paste0("output/iter", iter, "_point_exponential_cd.rds"))
-  L10 <- fit.cd$L
+  L11 <- fit.cd$L
   
   ### load in the EBMF fit to log-pc counts based on covariance decomposition, with generalized binary prior on L
   fit.gbcd <- readRDS(paste0("output/iter", iter, "_gbcd.rds"))
-  L11 <- fit.gbcd$L
+  L12 <- fit.gbcd$L
+  
+  
+  ############################################ PCA applied to log-pc counts ##############################################
+  ### load in the PCA fit to log-pc counts
+  fit.pca <- readRDS(paste0("output/iter", iter, "_pca_K12.rds"))
+  L13 <- fit.pca$u
   
   
   ############################################ summarize results for all methods ##############################################
   ### estiamte the correlation between each true GEP and the estimated GEP with highest correlation among all GEPs returned by each approach
-  loadings <- list(L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11)
+  loadings <- list(L1, L2, L3, L4, L5, L6, L7, L8, L9, L10, L11, L12, L13)
 
   ### iterate over subtype-related GEPs
   for(k in 1:2){
     idx1 <- idx1 + 1
     ### iterate over methods
-    for(i in 1:11){
+    for(i in 1:13){
       res1[idx1, i] <- max(cor(L[,k], loadings[[i]]))
     }
   }
@@ -319,7 +342,7 @@ for(iter in 1:20){
   for(k in 3:3){
     idx2 <- idx2 + 1
     ### iterate over methods
-    for(i in 1:11){
+    for(i in 1:13){
       res2[idx2, i] <- max(cor(L[,k], loadings[[i]]))
     }
   }
@@ -328,7 +351,7 @@ for(iter in 1:20){
   for(k in 4:11){
     idx3 <- idx3 + 1
     ### iterate over methods
-    for(i in 1:11){
+    for(i in 1:13){
       res3[idx3, i] <- max(cor(L[,k], loadings[[i]]))
     }
   }
@@ -336,52 +359,52 @@ for(iter in 1:20){
 
 
 ### summarize the estimation performance for the continuous GEP
-methods <- c(rep("NMF, combined (UMI counts)", 20), rep("NMF, combined (log-pc counts)", 20), rep("Patient-by-patient NMF", 20), 
-             rep("Liger (lambda=5)", 20), rep("CCA (Seurat)" , 20), rep("MNN Correct", 20), rep("Conos", 20),
-             rep("EB-SNMF, point-exp prior", 20), rep("EB-SNMF, GB prior", 20), rep("CD, point-exp prior", 20), rep("GBCD", 20))
+methods <- c(rep("NMF, combined (UMI counts)", 20), rep("NMF, consensus (UMI counts)", 20), rep("NMF, combined (log-pc counts)", 20), 
+             rep("Patient-by-patient NMF", 20), rep("LIGER", 20), rep("CCA (Seurat)" , 20), rep("MNN Correct", 20), rep("Conos", 20),
+             rep("EB-SNMF, point-exp prior", 20), rep("EB-SNMF, GB prior", 20), rep("CD, point-exp prior", 20), rep("GBCD", 20), rep("PCA", 20))
 methods <- factor(methods, 
-                  levels=c("NMF, combined (UMI counts)", "NMF, combined (log-pc counts)", "Patient-by-patient NMF", "Liger (lambda=5)",
-                           "CCA (Seurat)", "MNN Correct", "Conos", "EB-SNMF, point-exp prior", "EB-SNMF, GB prior", "CD, point-exp prior", "GBCD"))
-classes <- c(rep("I", 20*4), rep("II", 20*3), rep("III", 20*4))
-dat1 <- data.frame(correlation=c(res2), method=methods, class=factor(classes, levels=c("I", "II", "III")))
+                  levels=c("NMF, combined (UMI counts)", "NMF, consensus (UMI counts)", "NMF, combined (log-pc counts)", 
+                           "Patient-by-patient NMF", "LIGER", "CCA (Seurat)", "MNN Correct", "Conos",
+                           "EB-SNMF, point-exp prior", "EB-SNMF, GB prior", "CD, point-exp prior", "GBCD", "PCA"))
+dat1 <- data.frame(correlation=c(res2), method=methods)
 
-plt <- ggplot(dat1, aes(x=class, y=correlation, fill=method)) + 
+plt <- ggplot(dat1, aes(x=method, y=correlation, fill=method)) + 
   geom_boxplot(width = 0.44, size = 0.4, outlier.shape = NA, position = position_dodge(1/2)) + ylim(0, 1) +
-  scale_fill_manual(values = brewer.pal(n=12, name="Paired")) + labs(x = "Category of methods", title = "Continuous GEP") + 
+  labs(x = "Methods", title = "Continuous GEP") + 
   theme(plot.title = element_text(hjust = 0.5), text = element_text(size=20), legend.text=element_text(size = 13.5),
         axis.text.x = element_text(size=16, hjust=1))
 
 
 ### summarize the estimation performance for the subtype-related GEPs
-methods <- c(rep("NMF, combined (UMI counts)", 40), rep("NMF, combined (log-pc counts)", 40), rep("Patient-by-patient NMF", 40), 
-             rep("Liger (lambda=5)", 40), rep("CCA (Seurat)" , 40), rep("MNN Correct", 40), rep("Conos", 40),
-             rep("EB-SNMF, point-exp prior", 40), rep("EB-SNMF, GB prior", 40), rep("CD, point-exp prior", 40), rep("GBCD", 40))
+methods <- c(rep("NMF, combined (UMI counts)", 40), rep("NMF, consensus (UMI counts)", 40), rep("NMF, combined (log-pc counts)", 40), 
+             rep("Patient-by-patient NMF", 40), rep("LIGER", 40), rep("CCA (Seurat)" , 40), rep("MNN Correct", 40), rep("Conos", 40),
+             rep("EB-SNMF, point-exp prior", 40), rep("EB-SNMF, GB prior", 40), rep("CD, point-exp prior", 40), rep("GBCD", 40), rep("PCA", 40))
 methods <- factor(methods, 
-                  levels=c("NMF, combined (UMI counts)", "NMF, combined (log-pc counts)", "Patient-by-patient NMF", "Liger (lambda=5)",
-                           "CCA (Seurat)", "MNN Correct", "Conos", "EB-SNMF, point-exp prior", "EB-SNMF, GB prior", "CD, point-exp prior", "GBCD"))
-classes <- c(rep("I", 40*4), rep("II", 40*3), rep("III", 40*4))
-dat2 <- data.frame(correlation=c(res1), method=methods, class=factor(classes, levels=c("I", "II", "III")))
+                  levels=c("NMF, combined (UMI counts)", "NMF, consensus (UMI counts)", "NMF, combined (log-pc counts)", 
+                           "Patient-by-patient NMF", "LIGER", "CCA (Seurat)", "MNN Correct", "Conos",
+                           "EB-SNMF, point-exp prior", "EB-SNMF, GB prior", "CD, point-exp prior", "GBCD", "PCA"))
+dat2 <- data.frame(correlation=c(res1), method=methods)
 
-plt2 <- ggplot(dat2, aes(x=class, y=correlation, fill=method)) + 
+plt2 <- ggplot(dat2, aes(x=method, y=correlation, fill=method)) + 
   geom_boxplot(width = 0.44, size = 0.4, outlier.shape = NA, position = position_dodge(1/2)) + ylim(0, 1) +
-  scale_fill_manual(values = brewer.pal(n=12, name="Paired")) + labs(x = "Category of methods", title = "Subtype-related GEPs") + 
+  labs(x = "Methods", title = "Subtype-related GEPs") + 
   theme(plot.title = element_text(hjust = 0.5), text = element_text(size=20), legend.text=element_text(size = 13.5),
         axis.text.x = element_text(size=16, hjust=1))
 
 
 ### summarize the estimation performance for the patient-specific GEPs
-methods <- c(rep("NMF, combined (UMI counts)", 160), rep("NMF, combined (log-pc counts)", 160), rep("Patient-by-patient NMF", 160), 
-             rep("Liger (lambda=5)", 160), rep("CCA (Seurat)" , 160), rep("MNN Correct", 160), rep("Conos", 160),
-             rep("EB-SNMF, point-exp prior", 160), rep("EB-SNMF, GB prior", 160), rep("CD, point-exp prior", 160), rep("GBCD", 160))
+methods <- c(rep("NMF, combined (UMI counts)", 160), rep("NMF, consensus (UMI counts)", 160), rep("NMF, combined (log-pc counts)", 160), 
+             rep("Patient-by-patient NMF", 160), rep("LIGER", 160), rep("CCA (Seurat)" , 160), rep("MNN Correct", 160), rep("Conos", 160),
+             rep("EB-SNMF, point-exp prior", 160), rep("EB-SNMF, GB prior", 160), rep("CD, point-exp prior", 160), rep("GBCD", 160), rep("PCA", 160))
 methods <- factor(methods, 
-                  levels=c("NMF, combined (UMI counts)", "NMF, combined (log-pc counts)", "Patient-by-patient NMF", "Liger (lambda=5)",
-                           "CCA (Seurat)", "MNN Correct", "Conos", "EB-SNMF, point-exp prior", "EB-SNMF, GB prior", "CD, point-exp prior", "GBCD"))
-classes <- c(rep("I", 160*4), rep("II", 160*3), rep("III", 160*4))
-dat3 <- data.frame(correlation=c(res3), method=methods, class=factor(classes, levels=c("I", "II", "III")))
+                  levels=c("NMF, combined (UMI counts)", "NMF, consensus (UMI counts)", "NMF, combined (log-pc counts)", 
+                           "Patient-by-patient NMF", "LIGER", "CCA (Seurat)", "MNN Correct", "Conos",
+                           "EB-SNMF, point-exp prior", "EB-SNMF, GB prior", "CD, point-exp prior", "GBCD", "PCA"))
+dat3 <- data.frame(correlation=c(res3), method=methods)
 
-plt3 <- ggplot(dat3, aes(x=class, y=correlation, fill=method)) + 
+plt3 <- ggplot(dat3, aes(x=method, y=correlation, fill=method)) + 
   geom_boxplot(width = 0.44, size = 0.4, outlier.shape = NA, position = position_dodge(1/2)) + ylim(0, 1) +
-  scale_fill_manual(values = brewer.pal(n=12, name="Paired")) + labs(x = "Category of methods", title = "Patient-specific GEPs") + 
+  labs(x = "Methods", title = "Patient-specific GEPs") + 
   theme(plot.title = element_text(hjust = 0.5), text = element_text(size=20), legend.text=element_text(size = 13.5),
         axis.text.x = element_text(size=16, hjust=1))
 

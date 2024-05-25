@@ -48,6 +48,7 @@ source("../code/fit_cov_ebnmf.R")
 ### fit GBCD to estimate GEP memberships and signatures
 ### The runtime depends on the size of the dataset being analyzed, the number of maximum GEPs and the computing environment.
 ### It takes about 2 to 3 hours to fit 24 GEPs for the HNSCC dataset containing 2,176 cells.
+### Note that the "gbcd" package implements a faster version which takes about 50 minutes.
 fit.gbcd <- flash_fit_cov_ebnmf(Y = Y, Kmax = 24, prior = as.ebnm.fn(prior_family = "generalized_binary", scale = 0.04), extrapolate = FALSE)
 save(fit.gbcd, file = "hnscc_gbcd.RData")
 
@@ -117,7 +118,7 @@ write.xlsx(dat.list, "GEP_driving_genes.xlsx")
 
 
 
-############################# plot heatmap of of GEP memberships produced by alternative methods (Supplementary Fig. 4-8) #############################
+############################# plot heatmap of of GEP memberships produced by alternative methods (Supplementary Fig. 5-11) #############################
 ### combined nmf
 fit.nmf <- readRDS("other/combined_nmf.rds")
 W <- t(t(fit.nmf$W)/apply(fit.nmf$W, 2, max))
@@ -128,6 +129,27 @@ k.nmf.idx <- c(k.nmf.idx1, k.nmf.idx2)
 pheatmap(W[loadings_order, k.nmf.idx], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE, 
          annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, color = cols, breaks = brks,
          labels_col = 1:length(k.nmf.idx), angle_col = 0, fontsize = 12, fontsize_col = 11, gaps_col = length(k.nmf.idx1), main = "")
+
+### pca
+fit.pca <- readRDS("other/pca.rds")
+L.pca <- fit.pca$u
+L.pca <- t(t(L.pca)/apply(L.pca, 2, function(x){x[which.max(abs(x))]}))
+rownames(L.pca) <- rownames(anno)
+colnames(L.pca) <- paste0("k", 1:ncol(L.pca))
+pheatmap(L.pca[loadings_order, ], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE,
+         annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, 
+         color = colorRampPalette(c("blue", "gray96", "red"))(99), breaks = seq(-1, 1, length = 100),
+         labels_col = 1:ncol(L.pca), angle_col = 0, fontsize = 12, fontsize_col = 11, main = "")
+
+### consensus NMF
+cnmf <- read.table("other/result.usages.k_20.dt_0_1.consensus.txt")
+cnmf <- cnmf/rowSums(cnmf)
+cnmf <- t(t(cnmf)/apply(cnmf, 2, max))
+rownames(cnmf) <- rownames(anno)
+colnames(cnmf) <- paste0("k", 1:ncol(cnmf))
+pheatmap(cnmf[loadings_order, ], cluster_rows = FALSE, cluster_cols = FALSE, show_rownames = FALSE, 
+         annotation_row = anno, annotation_colors = anno_colors, annotation_names_row = FALSE, color = cols, breaks = brks,
+         labels_col = 1:ncol(cnmf), angle_col = 0, fontsize = 12, fontsize_col = 11, main = "")
 
 ### liger
 fit.liger <- readRDS("other/liger.rds")
@@ -272,7 +294,7 @@ p <- ggplot(dat, aes(x = gene, y = gep, fill = lfc)) + geom_tile() + scale_fill_
 
 
 
-######################## do the plots characterizing in detail each shared GEP identified by gbcd (Supplementary Fig. 10) ##########################
+######################## do the plots characterizing in detail each shared GEP identified by gbcd (Supplementary Fig. 18) ##########################
 ### specify the particular GEP to plot
 idx <- 1
 plot.idx <- k.idx1[idx]
