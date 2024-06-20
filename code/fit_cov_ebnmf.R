@@ -10,22 +10,30 @@ flash_fit_cov_ebnmf <-
   function (Y, Kmax, prior = ebnm::ebnm_generalized_binary, thres = 0.8,
             extrapolate = TRUE, maxiter = 500, verbose = 1) {
 
-  ### calculate the covariance matrix from the cell by gene matrix of gene expression data
-  dat <- Y %*% t(Y)/ncol(Y)
+  ### use the covariance matrix from the cell by gene matrix of gene expression data
+  if (2 * ncol(Y) * mean(Y > 0) < nrow(Y)) {
+    # Use lowrank plus sparse representation:
+    dat <- list(U = Y, D = rep(1 / ncol(Y), ncol(Y)), V = Y)
+  } else {
+    # Form covariance matrix:
+    dat <- Matrix::tcrossprod(Y) / ncol(Y)
+  }
 
   ### fit EBMF with point laplace prior to covariance matrix without considering the diagonal component
   fit.cov <- flash_init(dat, var_type = 0) %>%
-    flash_greedy(Kmax = 1, ebnm_fn = ebnm_unimodal_nonnegative, verbose = 1) %>%
-    flash_greedy(Kmax = Kmax - 1, ebnm_fn = ebnm_point_laplace, verbose = 1) %>%
-    flash_backfit(maxiter = maxiter, verbose = 1)
+    flash_set_verbose(verbose) %>%
+    flash_greedy(Kmax = 1, ebnm_fn = ebnm_unimodal_nonnegative) %>%
+    flash_greedy(Kmax = Kmax - 1, ebnm_fn = ebnm_point_laplace) %>%
+    flash_backfit(extrapolate = extrapolate, maxiter = maxiter)
 
   ### fit EBMF with point laplace prior to covariance matrix with the diagonal component
-  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, prior = ebnm::ebnm_point_laplace, maxiter = maxiter, verbose = 1)$fl
+  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, maxiter = maxiter)$fl
 
   ### initialize EB-NMF fit from the EBMF fit with point laplace prior
   cov.init <- init_cov_ebnmf(fit.cov)
   kmax <- which.max(colSums(cov.init[[1]]))
   fit.cov <- flash_init(dat, var_type = 0) %>%
+    flash_set_verbose(verbose) %>%
     flash_factors_init(
       init = lapply(cov.init, function(x) x[, kmax, drop = FALSE]),
       ebnm_fn = ebnm_unimodal_nonnegative
@@ -34,10 +42,10 @@ flash_fit_cov_ebnmf <-
       init = lapply(cov.init, function(x) x[, -c(kmax), drop = FALSE]),
       ebnm_fn = prior
     ) %>%
-    flash_backfit(extrapolate = extrapolate, maxiter = 25, verbose = verbose)
+    flash_backfit(extrapolate = extrapolate, maxiter = 25)
 
   ### fit EB-NMF with a nonnegative prior to covariance matrix with the diagonal component
-  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, prior = prior, extrapolate = extrapolate, maxiter = 25, verbose = verbose)$fl
+  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, extrapolate = extrapolate, maxiter = 25)$fl
 
   ### keep at most Kmax factors based on proportion of variance explained and refit EB-NMF to covariance matrix
   kset <- (length(fit.cov$pve) - rank(fit.cov$pve) < 1.5*Kmax) & (fit.cov$pve > 0)
@@ -45,7 +53,7 @@ flash_fit_cov_ebnmf <-
   kall <- 1:fit.cov$n_factors
   if(!all(kset))
     fit.cov <- flash_factors_remove(fit.cov, kset=kall[!kset])
-  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, prior = prior, extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)$fl
+  fit.cov <- fit_ebmf_to_YY(dat = dat, fl = fit.cov, extrapolate = extrapolate, maxiter = maxiter)$fl
 
   ### scale GEP membership estimates to 0-1 scale, and calculate Pearson correlations between L and L-tilde
   k.order <- order(fit.cov$pve, decreasing = TRUE)
@@ -55,7 +63,7 @@ flash_fit_cov_ebnmf <-
   fit.L <- t(t(fit.L)/apply(fit.L, 2, max))
 
   ### estimate GEP signatures by fitting EB-SNMF to gene expression data matrix with fixed L estimated from covariance decomposition above
-  init.F <- t(solve(crossprod(fit.L), crossprod(fit.L, Y)))
+  init.F <- t(solve(crossprod(fit.L), as.matrix(Matrix::crossprod(fit.L, Y))))
   fit.snmf <- flash_init(Y, S = 1/sqrt(nrow(Y)), var_type = 2) %>%
     flash_factors_init(
       init = list(as.matrix(fit.L), as.matrix(init.F)),
@@ -119,30 +127,28 @@ init_cov_ebnmf <- function(fl, kset = 1:ncol(fl$flash_fit$EF[[1]])) {
 
 
 ### fit EBMF to covariance matrix YY' s.t. E[YY'] = LL'+ D, where D = s2*I and I is an identity matrix
-fit_ebmf_to_YY <- function(dat, fl, prior, extrapolate = TRUE, maxiter = 500, epsilon = 0, verbose = 1){
-  s2 <- max(0, mean(diag(dat) - diag(fitted(fl))))
+fit_ebmf_to_YY <- function(dat, fl, extrapolate = TRUE, maxiter = 500, epsilon = 1e-3){
+  if (is.matrix(dat) || inherits(dat, "Matrix")) {
+    data_diag <- diag(dat)
+  } else {
+    data_diag <- Matrix::rowSums(dat$U * dat$D * dat$V)
+  }
+
+  s2 <- max(0, mean(data_diag - rowSums(fl$L_pm * fl$F_pm)))
   s2_diff <- Inf
 
   ### alternate between estimating s2 and backfitting until convergence
-  while(s2 > 0 && abs(s2_diff - 1) > 1e-3) {
-    dat_minuss2 <- dat - diag(rep(s2, ncol(dat)))
-    kset <- which(fl$pve > epsilon)
-    kmax <- which.max(fl$pve)
-    kset <- kset[-c(kmax)]
-    fl <- flash_init(dat_minuss2) %>%
-      flash_factors_init(
-        init = lapply(fl$flash_fit$EF, function(x) x[, kmax, drop = FALSE]),
-        ebnm_fn = ebnm_unimodal_nonnegative
-      ) %>%
-      flash_factors_init(
-        init = lapply(fl$flash_fit$EF, function(x) x[, kset, drop = FALSE]),
-        ebnm_fn = prior
-      ) %>%
-      flash_backfit(extrapolate = extrapolate, maxiter = maxiter, verbose = verbose)
+  while(s2 > 0 && abs(s2_diff - 1) > epsilon) {
+    dat_minuss2 <- list(U = dat$U, D = dat$D, V = dat$V,
+                        S = Matrix::Diagonal(nrow(dat$U), -s2))
+    fl <- fl %>%
+      flash_update_data(dat_minuss2) %>%
+      flash_backfit(extrapolate = extrapolate, maxiter = maxiter)
+
     old_s2 <- s2
-    s2 <- max(0, mean(diag(dat) - diag(fitted(fl))))
+    s2 <- max(0, mean(data_diag - rowSums(fl$L_pm * fl$F_pm)))
     s2_diff <- s2 / old_s2
   }
 
-  return(list(dat=dat, fl=fl, s2=s2))
+  return(list(dat = dat, fl = fl, s2 = s2))
 }
